@@ -31,6 +31,8 @@ class _LogOutState extends State<LogOut> {
               padding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
               child: Image.asset('assets/images/icon@2x.png', height: 150),
             ),
+
+            // LOG OUT BUTTON, PRESSED IF USER DOES NOT WISH TO MAKE A NEW RECORD BECAUSE THEY ARE DONE WITH OUTREACH
             RaisedButton(
               child: Text(
                 AppTranslations.of(context).text("logout")
@@ -42,6 +44,8 @@ class _LogOutState extends State<LogOut> {
                 );
               },
             ),
+
+            // NEW RECORD BUTTON, PRESSED IF USER WISHES TO MAKE ANOTHER RECORD
             RaisedButton(
               child: Text(
                 AppTranslations.of(context).text("new_record")

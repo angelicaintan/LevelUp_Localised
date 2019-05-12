@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_localisation/language_selector_page.dart';
 
+// ICON BUTTON THAT NAVIGATES TO THE LANGUAGE_SELECTOR_PAGE
+
 class LanguageSelectorIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

@@ -227,7 +227,7 @@ class _PatientInfo1State extends State<PatientInfo1> {
       'j. CSSA': prefs.getBool('cssa') ?? 0,
       'k. birthday': prefs.getString('birthday') ?? 0,
       'l. age': prefs.getString('age') ?? 0,
-      'm. reject:': prefs.getBool('reject') ?? 0,
+      'm. reject': prefs.getBool('reject') ?? 0,
       'n. heart-rate': prefs.getString('heart-rate') ?? 0,
       'o. blood-pressure': prefs.getString('blood-pressure') ?? 0,
       'p. blood-glucose': prefs.getString('blood-glucose') ?? 0,
