@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+// FILE THAT SUPPORTS APPLICATION LOCALISATION
+
 class Application {
 
   static final Application _application = Application._internal();

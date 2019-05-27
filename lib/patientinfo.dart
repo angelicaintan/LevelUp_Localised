@@ -2,11 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'main.dart';
 import 'package:intl/intl.dart';
 import 'app_translations.dart';
-import 'patientinfo2.dart';
-import 'helppatientinfo1.dart';
+import 'helppatientinfo.dart';
 import 'logout.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -14,16 +12,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'newrecord.dart';
 
-class PatientInfo1 extends StatefulWidget {
+class PatientInfo extends StatefulWidget {
   @override
-  _PatientInfo1State createState() => _PatientInfo1State();
+  _PatientInfoState createState() => _PatientInfoState();
 }
 
-class _PatientInfo1State extends State<PatientInfo1> {
+class _PatientInfoState extends State<PatientInfo> {
   void _dismissKeyboard() {
     FocusScope.of(context).requestFocus(new FocusNode());
   }
 
+  // VARIABLES FOR THE BASIC INFO OF THE PATIENT (part 1 of the record)
   String location;
   String name;
   String description;
@@ -34,17 +33,23 @@ class _PatientInfo1State extends State<PatientInfo1> {
   String dob = ' ';
   String agestring;
   int age;
-  bool reject = false;
-
   double agefull;
-
   int _genderValue = -1;
   int _cssaValue = -1;
-
   bool _smoking = false;
   bool _alcohol = false;
   bool _drugs = false;
+  bool reject = false;
 
+  final locationController = TextEditingController();
+  final nameController = TextEditingController();
+  final descController = TextEditingController();
+  final contactController = TextEditingController();
+  final hkidController = TextEditingController();
+  final ageController = TextEditingController();
+  final birthdayController = TextEditingController();
+
+  // VARIABLES AND TEXT CONTROLLERS FOR THE HEALTH INFO OF THE PATIENT (part 2 of the record)
   String heartrate;
   String bloodpressure;
   String bloodglucose;
@@ -63,28 +68,21 @@ class _PatientInfo1State extends State<PatientInfo1> {
   final respirationrateController = TextEditingController();
   final additionalinfo1Controller = TextEditingController();
 
-  final locationController = TextEditingController();
-  final nameController = TextEditingController();
-  final descController = TextEditingController();
-  final contactController = TextEditingController();
-  final hkidController = TextEditingController();
-  final ageController = TextEditingController();
-  final birthdayController = TextEditingController();
+  // VARIABLES AND TEXT CONTROLLERS FOR THE FURTHER HEALTH DESCRIPTION OF THE PATIENT (part 3 of the record)
+  String wound;
+  String mentalissues;
+  String pastmedrecords;
+  String additionalinfo2;
 
   final woundController = TextEditingController();
   final mentalissuesController = TextEditingController();
   final prevmedrecordsController = TextEditingController();
   final additionalinfo2Controller = TextEditingController();
 
-  List<File> images = new List(5);
-
-  String wound;
-  String mentalissues;
-  String pastmedrecords;
-  String additionalinfo2;
-
+  List<File> images = new List(5);   
   int numfiles = 0;
 
+  // FUNCTION THAT CHANGES THE VALUE OF THE GENDER BOOL
   void _genderChange(int value) {
     setState(() {
       _genderValue = value;
@@ -100,6 +98,7 @@ class _PatientInfo1State extends State<PatientInfo1> {
     });
   }
 
+  // FUNCTION THAT CHANGES THE VALUE OF THE CSSA BOOL
   void _cssaChange(int value) {
     setState(() {
       _cssaValue = value;
@@ -115,8 +114,9 @@ class _PatientInfo1State extends State<PatientInfo1> {
     });
   }
 
-  DateTime selectedDate = DateTime.now();
-  DateTime dateNow = DateTime.now();
+  // FUNCTION THAT DISPLAYS THE DATE PICKER (for selecting the patient's date of birth)
+  DateTime selectedDate = DateTime.now();   // sets the default selected date as today
+  DateTime dateNow = DateTime.now();        // stores today's date in a variable to be used in the funct
 
   void _showDatePicker() {
     showDialog(
@@ -155,14 +155,169 @@ class _PatientInfo1State extends State<PatientInfo1> {
         });
   }
 
-  void _changeDatetime(int year, int month, int date) {
+  // FUNCTION THAT OPENS THE PHONE CAMERA (to allow users to take pictures and attach to their records) 
+  Future _takePicture() async {
+    var image = await ImagePicker.pickImage(source: ImageSource.camera) ?? null;
+
+    if (image != null) {
+      setState(() {
+        switch (numfiles) {
+          case 0:
+            images[0] = image;
+            ++numfiles;
+            break;
+          case 1:
+            images[1] = image;
+            ++numfiles;
+            break;
+          case 2:
+            images[2] = image;
+            ++numfiles;
+            break;
+          case 3:
+            images[3] = image;
+            ++numfiles;
+            break;
+          case 4:
+            images[4] = image;
+            ++numfiles;
+            break;
+          case 5:
+            _showErrorDialog();
+        }
+      });
+    }
+  }
+
+  // FUNCTION THAT OPENS THE PHONE GALLERY (to allow users to select pictures and attach to their records) 
+  Future _selectPicture() async {
+    var image =
+        await ImagePicker.pickImage(source: ImageSource.gallery) ?? null;
+
+    if (image != null) {
+      setState(() {
+        switch (numfiles) {
+          case 0:
+            images[0] = image;
+            ++numfiles;
+            break;
+          case 1:
+            images[1] = image;
+            ++numfiles;
+            break;
+          case 2:
+            images[2] = image;
+            ++numfiles;
+            break;
+          case 3:
+            images[3] = image;
+            ++numfiles;
+            break;
+          case 4:
+            images[4] = image;
+            ++numfiles;
+            break;
+          case 5:
+            _showErrorDialog();
+        }
+      });
+    }
+  }
+
+  // FUNCTION THAT DISPLAYS DIALOG TO ASK USER IF THEY'D LIKE TO SUBMIT THE RECORDS
+  void _showDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text(AppTranslations.of(context).text("send_to")),
+          content: new Text(AppTranslations.of(context).text("you_cant_edit")),
+          actions: <Widget>[
+            new FlatButton(
+                child: Text(AppTranslations.of(context).text("send")),
+                onPressed: () {
+                  _saveRecord();
+                  _uploadPicture();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LogOut()),
+                  );
+                }),
+            new FlatButton(
+              child: Text(AppTranslations.of(context).text("cancel")),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // FUNCTION THAT DISPLAYS ERROR DIALOG 
+  void _showErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text(AppTranslations.of(context).text("error_photos")),
+          content: new Text(AppTranslations.of(context).text("remove_photo")),
+          actions: <Widget>[
+            new FlatButton(
+                child: Text(AppTranslations.of(context).text("ok")),
+                onPressed: () {
+                  Navigator.pop(context);
+                }),
+          ],
+        );
+      },
+    );
+  }
+
+  // FUNCTION THAT REMOVES THE PHOTOS FROM THE IMAGE FILE LIST
+  void _deletePic(int i) {
     setState(() {
-      dob = '$year-$month-$date';
+      images[i] = null;
+      for (; i != numfiles - 1; ++i) images[i] = images[i + 1];
+      --numfiles;
     });
   }
 
-  FirebaseStorage _storage = FirebaseStorage.instance;
+    // FUNCTION THAT STORES THE PATIENT'S INFO IN SHARED PREFERENCES (for temporary storage before uploading to firebase)
+  _persistPatientInfo() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // PART 1
+    prefs.setString('location', location);
+    prefs.setString('name', name);
+    prefs.setString('description', description);
+    prefs.setString('gender', gender);
+    prefs.setString('contact', contact);
+    prefs.setBool('cssa', cssa);
+    prefs.setString('HKID', hkid);
+    prefs.setString('birthday', dob);
+    prefs.setString('age', agestring);
+    prefs.setBool('reject', reject);
 
+    // PART 2
+    prefs.setString('heart-rate', heartrate);
+    prefs.setString('blood-pressure', bloodpressure);
+    prefs.setString('blood-glucose', bloodglucose);
+    prefs.setString('body-height', bodyheight);
+    prefs.setString('body-weight', bodyweight);
+    prefs.setString('BMI', bmi);
+    prefs.setString('respiration-rate', respirationrate);
+    prefs.setBool('smoking', _smoking);
+    prefs.setBool('alcohol', _alcohol);
+    prefs.setBool('drugs', _drugs);
+    prefs.setString('additional-info1', additionalinfo1);
+
+    // PART 3
+    prefs.setString('wound', woundController.text);
+    prefs.setString('mental-issues', mentalissuesController.text);
+    prefs.setString('past-med-records', prevmedrecordsController.text);
+    prefs.setString('additional-info2', additionalinfo2Controller.text);
+  }
+
+  // FUNCTION THAT UPLOADS PHOTOS TO FIREBASE
   Future<String> _uploadPicture() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String accesscode = prefs.getString('access-code');
@@ -178,38 +333,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
     }
   }
 
-  var records = Firestore.instance.collection('Records').document();
-
-  _persistPatientInfo() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('location', location);
-    prefs.setString('name', name);
-    prefs.setString('description', description);
-    prefs.setString('gender', gender);
-    prefs.setString('contact', contact);
-    prefs.setBool('cssa', cssa);
-    prefs.setString('HKID', hkid);
-    prefs.setString('birthday', dob);
-    prefs.setString('age', agestring);
-    prefs.setBool('reject', reject);
-
-    prefs.setString('heart-rate', heartrate);
-    prefs.setString('blood-pressure', bloodpressure);
-    prefs.setString('blood-glucose', bloodglucose);
-    prefs.setString('body-height', bodyheight);
-    prefs.setString('body-weight', bodyweight);
-    prefs.setString('BMI', bmi);
-    prefs.setString('respiration-rate', respirationrate);
-    prefs.setBool('smoking', _smoking);
-    prefs.setBool('alcohol', _alcohol);
-    prefs.setBool('drugs', _drugs);
-    prefs.setString('additional-info1', additionalinfo1);
-
-    prefs.setString('wound', woundController.text);
-    prefs.setString('mental-issues', mentalissuesController.text);
-    prefs.setString('past-med-records', prevmedrecordsController.text);
-    prefs.setString('additional-info2', additionalinfo2Controller.text);
-  }
+  // FUNCTION THAT UPLOADS PATIENT'S INFO TO FIREBASE
+  var records = Firestore.instance.collection('Records').document();  // initializes firebase instance to be used in the function
 
   Future<Null> _saveRecord() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -247,128 +372,6 @@ class _PatientInfo1State extends State<PatientInfo1> {
     records.setData(recordMap);
   }
 
-  Future _takePicture() async {
-    var image = await ImagePicker.pickImage(source: ImageSource.camera) ?? null;
-
-    if (image != null) {
-      setState(() {
-        switch (numfiles) {
-          case 0:
-            images[0] = image;
-            ++numfiles;
-            break;
-          case 1:
-            images[1] = image;
-            ++numfiles;
-            break;
-          case 2:
-            images[2] = image;
-            ++numfiles;
-            break;
-          case 3:
-            images[3] = image;
-            ++numfiles;
-            break;
-          case 4:
-            images[4] = image;
-            ++numfiles;
-            break;
-          case 5:
-            _showErrorDialog();
-        }
-      });
-    }
-  }
-
-  Future _selectPicture() async {
-    var image =
-        await ImagePicker.pickImage(source: ImageSource.gallery) ?? null;
-
-    if (image != null) {
-      setState(() {
-        switch (numfiles) {
-          case 0:
-            images[0] = image;
-            ++numfiles;
-            break;
-          case 1:
-            images[1] = image;
-            ++numfiles;
-            break;
-          case 2:
-            images[2] = image;
-            ++numfiles;
-            break;
-          case 3:
-            images[3] = image;
-            ++numfiles;
-            break;
-          case 4:
-            images[4] = image;
-            ++numfiles;
-            break;
-          case 5:
-            _showErrorDialog();
-        }
-      });
-    }
-  }
-
-  void _showDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: new Text(AppTranslations.of(context).text("send_to")),
-          content: new Text(AppTranslations.of(context).text("you_cant_edit")),
-          actions: <Widget>[
-            new FlatButton(
-                child: Text(AppTranslations.of(context).text("send")),
-                onPressed: () {
-                  _saveRecord();
-                  _uploadPicture();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LogOut()),
-                  );
-                }),
-            new FlatButton(
-              child: Text(AppTranslations.of(context).text("cancel")),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showErrorDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: new Text(AppTranslations.of(context).text("error_photos")),
-          content: new Text(AppTranslations.of(context).text("remove_photo")),
-          actions: <Widget>[
-            new FlatButton(
-                child: Text(AppTranslations.of(context).text("ok")),
-                onPressed: () {
-                  Navigator.pop(context);
-                }),
-          ],
-        );
-      },
-    );
-  }
-
-  void _deletePic(int i) {
-    setState(() {
-      images[i] = null;
-      for (; i != numfiles - 1; ++i) images[i] = images[i + 1];
-      --numfiles;
-    });
-  }
-
 /*
   @override
   void initState() {
@@ -381,18 +384,22 @@ class _PatientInfo1State extends State<PatientInfo1> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(actions: <Widget>[
+
+          // LOG OUT BUTTON
           FlatButton(
             child: Text(AppTranslations.of(context).text("logout"),
                 style: TextStyle(fontSize: 18, color: Colors.white)),
             onPressed: () {},
           ),
+
+          // HELP BUTTON
           IconButton(
             icon: Icon(Icons.help_outline, size: 29),
             color: Colors.white,
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => HelpPatientInfo1()),
+                MaterialPageRoute(builder: (context) => HelpPatientInfo()),
               );
             },
           ),
@@ -402,6 +409,9 @@ class _PatientInfo1State extends State<PatientInfo1> {
             onTap: () => _dismissKeyboard(),
             child: Column(
               children: <Widget>[
+
+                // **PART 1: BASIC PATIENT INFO**
+                // LOCATION TEXTFIELD
                 Padding(
                   padding:
                       EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 10),
@@ -418,6 +428,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // PATIENT'S NAME TEXTFIELD
                 Padding(
                   padding:
                       EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 10),
@@ -434,6 +446,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // DESCRIPTION OF PATIENT TEXTFIELD
                 Padding(
                   padding: EdgeInsets.only(left: 24, right: 24, bottom: 5),
                   child: TextField(
@@ -450,6 +464,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // GENDER SELECTION RADIO BUTTONS
                 Row(
                   children: <Widget>[
                     Padding(
@@ -477,6 +493,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                     ),
                   ],
                 ),
+
+                // PATIENT'S CONTACT INFO TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 24),
                   child: TextField(
@@ -492,6 +510,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // PATIENT'S HKID NUMBER TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 24),
                   child: TextField(
@@ -507,6 +527,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // CSSA RADIO BUTTONS
                 Row(
                   children: <Widget>[
                     Padding(
@@ -534,6 +556,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                     ),
                   ],
                 ),
+
+                // TEXT AND BUTTON TO TRIGGER THE DATEPICKER
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
                   child: Text(AppTranslations.of(context).text("date_of_birth"),
@@ -547,10 +571,13 @@ class _PatientInfo1State extends State<PatientInfo1> {
                         Text(AppTranslations.of(context).text("select_date")),
                   ),
                 ),
+
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Text(dob, style: TextStyle(fontSize: 16)),
                 ),
+
+                // AGE TEXTFIELD -- CONTROLLER AUTOMATICALLY CHANGES VALUE WHEN DATE OF BIRTH IS SELECTED
                 Padding(
                   padding: EdgeInsets.only(top: 24, left: 24, right: 24),
                   child: TextField(
@@ -570,11 +597,15 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // BUTTON TO PRESS IF PATIENT REJECTS SERVICE -- navigates to newrecord page while still uploading basic patient data to firebase
                 Padding(
                   padding: EdgeInsets.all(24),
                   child: RaisedButton(
                     child: Text(AppTranslations.of(context).text("reject")),
                     onPressed: () {
+                      _persistPatientInfo();
+                      _saveRecord();
                       Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -587,6 +618,9 @@ class _PatientInfo1State extends State<PatientInfo1> {
                   ),
                 ),
                 Divider(),
+                // **PART 2: BASIC PATIENT'S HEALTH RECORD**
+
+                // HEART RATE TEXTFIELD
                 Padding(
                   padding:
                       EdgeInsets.only(left: 24, right: 24, top: 20, bottom: 5),
@@ -604,6 +638,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // BLOOD PRESSURE TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
                   child: TextField(
@@ -620,6 +656,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // BLOOD GLUCOSE TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
                   child: TextField(
@@ -636,6 +674,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // BODY HEIGHT TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
                   child: TextField(
@@ -652,6 +692,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // BODY WEIGHT TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
                   child: TextField(
@@ -668,6 +710,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // BMI TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
                   child: TextField(
@@ -683,6 +727,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // RESPIRATION RATE TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
                   child: TextField(
@@ -699,6 +745,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // ROW OF CHECKBOXES
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 24),
                   child: Row(
@@ -708,6 +756,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                         children: <Widget>[
                           Text(AppTranslations.of(context).text("smoking"),
                               style: TextStyle(fontSize: 16)),
+
+                          // SMOKING CHECKBOX
                           new Checkbox(
                             value: _smoking,
                             onChanged: (bool newValue) {
@@ -722,6 +772,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                         children: <Widget>[
                           Text(AppTranslations.of(context).text("alcohol"),
                               style: TextStyle(fontSize: 16)),
+
+                          // ALCOHOL CHECKBOX
                           new Checkbox(
                             value: _alcohol,
                             onChanged: (bool newValue) {
@@ -736,6 +788,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                         children: <Widget>[
                           Text(AppTranslations.of(context).text("drug_abuse"),
                               style: TextStyle(fontSize: 16)),
+
+                          // DRUG ABUSE CHECKBOX
                           new Checkbox(
                             value: _drugs,
                             onChanged: (bool newValue) {
@@ -749,6 +803,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                     ],
                   ),
                 ),
+
+                // ADDITIONAL INFO TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 24),
                   child: Text(
@@ -776,7 +832,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                 Padding(padding: EdgeInsets.symmetric(vertical: 10)),
 
                 Divider(),
-                
+                // ** PART 3: FURTHER HEALTH DESCRIPTIONS**
+                // WOUND DESCRIPTION TEXTFIELD
                 Padding(
                   padding:
                       EdgeInsets.only(top: 24, bottom: 5, left: 28, right: 24),
@@ -796,6 +853,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                               borderRadius: BorderRadius.circular(8))),
                       maxLines: null),
                 ),
+
+                // MENTAL ISSUES DESCRIPTION TEXTIELD
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 28),
                   child: Text(AppTranslations.of(context).text("mental_issues"),
@@ -815,6 +874,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                               borderRadius: BorderRadius.circular(8))),
                       maxLines: null),
                 ),
+
+                // PREVIOUS MEDICAL RECORDS TEXTFIELD
                 Padding(
                   padding:
                       EdgeInsets.only(top: 5, bottom: 5, left: 28, right: 24),
@@ -837,6 +898,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                               borderRadius: BorderRadius.circular(8))),
                       maxLines: null),
                 ),
+
+                // ADDITIONAL INFO TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 28),
                   child: Text(
@@ -861,6 +924,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                               borderRadius: BorderRadius.circular(8))),
                       maxLines: null),
                 ),
+
+                // ROW OF BUTTONS AND TEXT DESCRIPTIONS FOR PHOTO TAKING AND UPLOADING
                 Row(
                   children: <Widget>[
                     Padding(
@@ -870,6 +935,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                               .text("additional_files_photos"),
                           style: TextStyle(fontSize: 16)),
                     ),
+
+                    // CAMERA BUTTON
                     IconButton(
                       alignment: Alignment.centerRight,
                       icon: Icon(Icons.photo_camera),
@@ -878,6 +945,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                         _takePicture();
                       },
                     ),
+
+                    // ATTACHMENT BUTTON
                     IconButton(
                       alignment: Alignment.centerRight,
                       icon: Icon(Icons.attach_file),
@@ -888,6 +957,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                     ),
                   ],
                 ),
+
+                // DESCRIPTION FOR HOW MUCH USER CAN UPLOAD
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
@@ -904,11 +975,13 @@ class _PatientInfo1State extends State<PatientInfo1> {
                       alignment: Alignment.topRight,
                       child: Padding(
                         padding: EdgeInsets.only(right: 24),
-                        child: Text('$numfiles/5'),
+                        child: Text('$numfiles/5'), // COUNTS NUMBER OF PHOTOS UPLOADED BY USER
                       ),
                     ),
                   ],
                 ),
+
+                // DYNAMIC LIST OF UPLOADED PHOTOS
                 Padding(
                   padding:
                       EdgeInsets.only(left: 24, top: 24, bottom: 24, right: 96),
@@ -919,6 +992,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                         return new Row(children: <Widget>[
                           Image.file(images[index],
                               height: 100.0, width: 100.0),
+
+                          // DELETE BUTTON, CALLS _deletePic FUNCTION
                           FlatButton(
                               child: Text(
                                   AppTranslations.of(context).text("delete")),
@@ -928,29 +1003,8 @@ class _PatientInfo1State extends State<PatientInfo1> {
                         ]);
                       }),
                 ),
-                /*
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    RaisedButton(
-                      child: Text(AppTranslations.of(context).text("back")),
-                      onPressed: () {},
-                    ),
-                    Padding(padding: EdgeInsets.symmetric(horizontal: 10)),
-                    RaisedButton(
-                      child: Text(AppTranslations.of(context).text("next")),
-                      onPressed: () {
-                        _persistPatientInfo1();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => PatientInfo2()),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                */
+
+                // FINISH RECORD BUTTON -- CALLS _persistPatientInfo and _showDialog
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: RaisedButton(

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class HelpPatientInfo1 extends StatefulWidget {
+class HelpPatientInfo extends StatefulWidget {
   @override
-  _HelpPatientInfo1 createState() => _HelpPatientInfo1();
+  _HelpPatientInfo createState() => _HelpPatientInfo();
 }
 
-class _HelpPatientInfo1 extends State<HelpPatientInfo1> {
+class _HelpPatientInfo extends State<HelpPatientInfo> {
 
   @override
   Widget build(BuildContext context) {

@@ -5,6 +5,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+// FILE THAT SUPPORTS APPLICATION LOCALISATION
+
 class AppTranslations {
   Locale locale;
   static Map<dynamic, dynamic> _localisedValues;

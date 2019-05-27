@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'helpnewrecord.dart';
-import 'location.dart';
-import 'patientinfo1.dart';
+import 'patientinfo.dart';
 import 'main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -14,8 +13,10 @@ class NewRecord extends StatefulWidget {
 
 class _NewRecordState extends State<NewRecord> {
 
+  // STRING THAT STORES THE DATE IN WHICH THE 'NEW RECORD' BUTTON IS PRESSED (for firebase data filtering function)
   String accessdate;
 
+  // STORES ACCESSDATE IN SHARED PREFERENCES
    _persistaccessdate() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('accessdate', accessdate);
@@ -25,6 +26,8 @@ class _NewRecordState extends State<NewRecord> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(actions: <Widget>[
+
+          // LOG OUT BUTTON
           FlatButton(
             child: Text(AppTranslations.of(context).text("logout"), style: TextStyle(fontSize: 18, color: Colors.white)),
             onPressed: () {
@@ -34,6 +37,8 @@ class _NewRecordState extends State<NewRecord> {
               );
             },
           ),
+
+          // HELP BUTTON
           IconButton(
             icon: Icon(Icons.help_outline, size: 29),
             color: Colors.white,
@@ -52,6 +57,11 @@ class _NewRecordState extends State<NewRecord> {
               Padding(
                 padding:EdgeInsets.only(top:50),
               ),
+
+              // BUTTON THAT NAVIGATES TO THE 'PATIENT INFO' PAGE (where patient's data is recorded on)
+              // button also:
+              // -takes today's date and stores it in the accesscode variable
+              // -calls the _persistaccessdate() function
               Padding(
                 padding: EdgeInsets.all(30),
                 child: RaisedButton(
@@ -64,11 +74,13 @@ class _NewRecordState extends State<NewRecord> {
                     _persistaccessdate();
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => PatientInfo1()),
+                      MaterialPageRoute(builder: (context) => PatientInfo()),
                     );
                   },
                 ),
               ),
+
+              // BUTTON THAT NAVIGATES TO THE 'LOGOUT' PAGE 
               RaisedButton(
                 padding: EdgeInsets.all(20),
                 child: Text(AppTranslations.of(context).text("finish_outreach"), style: TextStyle(fontSize: 21)),

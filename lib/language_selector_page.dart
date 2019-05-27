@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:in_app_localisation/app_translations.dart';
 import 'package:in_app_localisation/application.dart';
 
+// PAGE WHERE USER CAN SELECT APPLICATION'S LANGUAGE
+
 class LanguageSelectorPage extends StatefulWidget {
   @override
   _LanguageSelectorPageState createState() => _LanguageSelectorPageState();

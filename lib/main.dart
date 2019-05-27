@@ -118,6 +118,8 @@ class _MyHomePageState extends State<MyHomePage> {
             // Here we take the value from the MyHomePage object that was created by
             // the App.build method, and use it to set our appbar title.
             actions: <Widget>[
+
+              // HELP BUTTON
               IconButton(
                 icon: Icon(Icons.help_outline, size: 29),
                 color: Colors.white,
@@ -128,7 +130,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
                 },
               ),
-              LanguageSelectorIconButton(),
+
+              // BUTTON THAT GOES TO THE LANGUAGE SELECTOR PAGE
+              LanguageSelectorIconButton(), 
             ]),
         body: ListView(children: <Widget>[
           GestureDetector(
@@ -137,6 +141,8 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Image.asset('assets/images/logo.png'),
+
+                // TEXTFIELD FOR ACCESS CODE
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                   child: TextField(
@@ -154,6 +160,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                // TEXTFIELD FOR VOLUNTEER'S NAME
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                   child: TextField(
@@ -170,6 +178,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             borderRadius: BorderRadius.circular(8))),
                   ),
                 ),
+
+                 // TEXTFIELD FOR VOLUNTEER'S EMAIL ADDRESS
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                   child: TextField(
@@ -189,6 +199,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                 ),
+
+                // BUTTON TO GO TO THE 'NEW RECORD' PAGE (also calls the persistlogin function to store the login data)
                 RaisedButton(
                   child: Text(
                     AppTranslations.of(context).text('go'),
@@ -199,7 +211,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       context,
                       MaterialPageRoute(builder: (context) => NewRecord()),
                     );
-                    // _persistLogin();
                   },
                 ),
                 Padding(
