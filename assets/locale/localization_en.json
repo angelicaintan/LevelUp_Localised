@@ -15,6 +15,7 @@
   "next": "Next",
 
   "location": "Location",
+  "personal_particulars": "Personal Particulars",
   "name": "Name",
   "description": "Description",
   "gender": "Gender:       F",
@@ -27,11 +28,12 @@
   "no": "No",
   "date_of_birth": "Date of Birth",
   "select_date": "Select Date",
-  "age": "age",
+  "age": "Age",
   "ok": "OK",
   "cancel": "Cancel",
   "reject": "Reject",
 
+  "general_medical_data": "General Medical Data",
   "heart_rate": "Heart Rate",
   "blood_pressure": "Blood Pressure",
   "blood_glucose": "Blood Glucose",
@@ -45,6 +47,7 @@
   "additional_information1": "Additional Information",
   "e.g._lost_weight": "Eg. Lost a lot of weight recently",
 
+  "additional_description": "Additional Description",
   "wound": "Wound",
   "mental_issues": "Mental Issues",
   "previous_medical_records": "Previous Medical Records",

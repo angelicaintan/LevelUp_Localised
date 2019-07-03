@@ -11,6 +11,10 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'newrecord.dart';
+import 'records.dart';
+import 'main.dart';
+import 'package:path/path.dart' as path;
+import 'package:sqflite/sqflite.dart';
 
 class PatientInfo extends StatefulWidget {
   @override
@@ -22,23 +26,28 @@ class _PatientInfoState extends State<PatientInfo> {
     FocusScope.of(context).requestFocus(new FocusNode());
   }
 
+  final _scrollController = new ScrollController();
+
+  // CREATE NEW RECORD
+  Record newrecord;
+
+  String username;
+  String emailaddress;
+
   // VARIABLES FOR THE BASIC INFO OF THE PATIENT (part 1 of the record)
   String location;
   String name;
   String description;
-  String contact;
-  bool cssa;
-  String hkid;
   String gender;
+  String contact;
+  String hkid;
+  bool cssa;
   String dob = ' ';
   String agestring;
   int age;
   double agefull;
-  int _genderValue = -1;
-  int _cssaValue = -1;
-  bool _smoking = false;
-  bool _alcohol = false;
-  bool _drugs = false;
+  int genderValue = -1;
+  int cssaValue = -1;
   bool reject = false;
 
   final locationController = TextEditingController();
@@ -53,10 +62,13 @@ class _PatientInfoState extends State<PatientInfo> {
   String heartrate;
   String bloodpressure;
   String bloodglucose;
-  String bodyheight;
   String bodyweight;
+  String bodyheight;
   String bmi;
   String respirationrate;
+  bool smoking = false;
+  bool alcohol = false;
+  bool drugs = false;
   String additionalinfo1;
 
   final heartrateController = TextEditingController();
@@ -79,15 +91,15 @@ class _PatientInfoState extends State<PatientInfo> {
   final prevmedrecordsController = TextEditingController();
   final additionalinfo2Controller = TextEditingController();
 
-  List<File> images = new List(5);   
+  List<File> images = new List(5);
   int numfiles = 0;
 
   // FUNCTION THAT CHANGES THE VALUE OF THE GENDER BOOL
   void _genderChange(int value) {
     setState(() {
-      _genderValue = value;
+      genderValue = value;
 
-      switch (_genderValue) {
+      switch (genderValue) {
         case 0:
           gender = 'female';
           break;
@@ -101,9 +113,9 @@ class _PatientInfoState extends State<PatientInfo> {
   // FUNCTION THAT CHANGES THE VALUE OF THE CSSA BOOL
   void _cssaChange(int value) {
     setState(() {
-      _cssaValue = value;
+      cssaValue = value;
 
-      switch (_cssaValue) {
+      switch (cssaValue) {
         case 0:
           cssa = true;
           break;
@@ -114,9 +126,11 @@ class _PatientInfoState extends State<PatientInfo> {
     });
   }
 
-  // FUNCTION THAT DISPLAYS THE DATE PICKER (for selecting the patient's date of birth)
-  DateTime selectedDate = DateTime.now();   // sets the default selected date as today
-  DateTime dateNow = DateTime.now();        // stores today's date in a variable to be used in the funct
+  // FUNCTION THAT DISPLAYS THE DATE PICKER (for selecting the patient's date of birth) and calculates age
+  DateTime selectedDate =
+      DateTime.now(); // sets the default selected date as today
+  DateTime dateNow = DateTime
+      .now(); // stores today's date in a variable to be used in the funct
 
   void _showDatePicker() {
     showDialog(
@@ -134,7 +148,7 @@ class _PatientInfoState extends State<PatientInfo> {
             ),
             actions: <Widget>[
               new FlatButton(
-                  child: Text("select"),
+                  child: Text(AppTranslations.of(context).text("ok")),
                   onPressed: () {
                     setState(() {
                       dob = DateFormat('yyyy-MM-dd').format(selectedDate);
@@ -155,7 +169,7 @@ class _PatientInfoState extends State<PatientInfo> {
         });
   }
 
-  // FUNCTION THAT OPENS THE PHONE CAMERA (to allow users to take pictures and attach to their records) 
+  // FUNCTION THAT OPENS THE PHONE CAMERA (to allow users to take pictures and attach to their records)
   Future _takePicture() async {
     var image = await ImagePicker.pickImage(source: ImageSource.camera) ?? null;
 
@@ -189,7 +203,7 @@ class _PatientInfoState extends State<PatientInfo> {
     }
   }
 
-  // FUNCTION THAT OPENS THE PHONE GALLERY (to allow users to select pictures and attach to their records) 
+  // FUNCTION THAT OPENS THE PHONE GALLERY (to allow users to select pictures and attach to their records)
   Future _selectPicture() async {
     var image =
         await ImagePicker.pickImage(source: ImageSource.gallery) ?? null;
@@ -224,36 +238,7 @@ class _PatientInfoState extends State<PatientInfo> {
     }
   }
 
-  // FUNCTION THAT DISPLAYS DIALOG TO ASK USER IF THEY'D LIKE TO SUBMIT THE RECORDS
-  void _showDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: new Text(AppTranslations.of(context).text("send_to")),
-          content: new Text(AppTranslations.of(context).text("you_cant_edit")),
-          actions: <Widget>[
-            new FlatButton(
-                child: Text(AppTranslations.of(context).text("send")),
-                onPressed: () {
-                  _saveRecord();
-                  _uploadPicture();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LogOut()),
-                  );
-                }),
-            new FlatButton(
-              child: Text(AppTranslations.of(context).text("cancel")),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // FUNCTION THAT DISPLAYS ERROR DIALOG 
+  // FUNCTION THAT DISPLAYS ERROR DIALOG
   void _showErrorDialog() {
     showDialog(
       context: context,
@@ -282,7 +267,7 @@ class _PatientInfoState extends State<PatientInfo> {
     });
   }
 
-    // FUNCTION THAT STORES THE PATIENT'S INFO IN SHARED PREFERENCES (for temporary storage before uploading to firebase)
+  // FUNCTION THAT STORES THE PATIENT'S INFO IN SHARED PREFERENCES (for temporary storage before uploading to firebase)
   _persistPatientInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     // PART 1
@@ -294,7 +279,7 @@ class _PatientInfoState extends State<PatientInfo> {
     prefs.setBool('cssa', cssa);
     prefs.setString('HKID', hkid);
     prefs.setString('birthday', dob);
-    prefs.setString('age', agestring);
+    prefs.setInt('age', age);
     prefs.setBool('reject', reject);
 
     // PART 2
@@ -305,9 +290,9 @@ class _PatientInfoState extends State<PatientInfo> {
     prefs.setString('body-weight', bodyweight);
     prefs.setString('BMI', bmi);
     prefs.setString('respiration-rate', respirationrate);
-    prefs.setBool('smoking', _smoking);
-    prefs.setBool('alcohol', _alcohol);
-    prefs.setBool('drugs', _drugs);
+    prefs.setBool('smoking', smoking);
+    prefs.setBool('alcohol', alcohol);
+    prefs.setBool('drugs', drugs);
     prefs.setString('additional-info1', additionalinfo1);
 
     // PART 3
@@ -315,6 +300,37 @@ class _PatientInfoState extends State<PatientInfo> {
     prefs.setString('mental-issues', mentalissuesController.text);
     prefs.setString('past-med-records', prevmedrecordsController.text);
     prefs.setString('additional-info2', additionalinfo2Controller.text);
+  }
+
+  // FUNCTION THAT STORES PATIENT'S INFO IN SQLITE
+  Future<void> insertRecord(Record record) async {
+    final Future<Database> database = openDatabase(
+      // Set the path to the database.
+      path.join(await getDatabasesPath(), 'records_database.db'),
+
+      // When the database is first created, create a table to store dogs.
+      onCreate: (db, version) {
+        // Run the CREATE TABLE statement on the database.
+        return db.execute(
+          "CREATE TABLE records (username TEXT, angelica TEXT, intan INTEGER)",
+        );
+      },
+      // Set the version. This executes the onCreate function and provides a
+      // path to perform database upgrades and downgrades.
+      version: 1,
+    );
+
+    // Get a reference to the database.
+    final Database db = await database;
+
+    // Insert the Dog into the correct table. Also specify the
+    // `conflictAlgorithm`. In this case, if the same dog is inserted
+    // multiple times, it replaces the previous data.
+    await db.insert(
+      'records',
+      record.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   // FUNCTION THAT UPLOADS PHOTOS TO FIREBASE
@@ -334,7 +350,9 @@ class _PatientInfoState extends State<PatientInfo> {
   }
 
   // FUNCTION THAT UPLOADS PATIENT'S INFO TO FIREBASE
-  var records = Firestore.instance.collection('Records').document();  // initializes firebase instance to be used in the function
+  var records = Firestore.instance
+      .collection('Records')
+      .document(); // initializes firebase instance to be used in the function
 
   Future<Null> _saveRecord() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -351,7 +369,7 @@ class _PatientInfoState extends State<PatientInfo> {
       'HKID': prefs.getString('HKID') ?? 0,
       'j. CSSA': prefs.getBool('cssa') ?? 0,
       'k. birthday': prefs.getString('birthday') ?? 0,
-      'l. age': prefs.getString('age') ?? 0,
+      'l. age': prefs.getInt('age') ?? 0,
       'm. reject': prefs.getBool('reject') ?? 0,
       'n. heart-rate': prefs.getString('heart-rate') ?? 0,
       'o. blood-pressure': prefs.getString('blood-pressure') ?? 0,
@@ -372,26 +390,69 @@ class _PatientInfoState extends State<PatientInfo> {
     records.setData(recordMap);
   }
 
-/*
-  @override
-  void initState() {
-    super.initState();
-    ageController.addListener(_printLatestValue);
+// FUNCTION THAT DISPLAYS DIALOG TO ASK USER IF THEY'D LIKE TO SUBMIT THE RECORDS
+  void _showDialog() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text(AppTranslations.of(context).text("send_to")),
+          content: new Text(AppTranslations.of(context).text("you_cant_edit")),
+          actions: <Widget>[
+            new FlatButton(
+                child: Text(AppTranslations.of(context).text("send")),
+                onPressed: () {
+                  //_saveRecord();
+                  //_uploadPicture();
+                  Record newrecord = new Record(
+                      username,
+                      emailaddress,
+                      location,
+                      name,
+                      description,
+                      gender,
+                      contact,
+                      hkid,
+                      cssa,
+                      dob,
+                      age,
+                      reject,
+                      heartrate,
+                      bloodpressure,
+                      bloodglucose,
+                      bodyheight,
+                      bodyweight,
+                      bmi,
+                      respirationrate,
+                      smoking,
+                      alcohol,
+                      drugs,
+                      additionalinfo1,
+                      wound,
+                      mentalissues,
+                      pastmedrecords,
+                      additionalinfo2);
+                  MyInherited.of(context).newrecord(newrecord);
+                  insertRecord(MyInherited.of(context).records[0]);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LogOut()),
+                  );
+                }),
+            new FlatButton(
+              child: Text(AppTranslations.of(context).text("cancel")),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        );
+      },
+    );
   }
-  */
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return new Scaffold(
         appBar: AppBar(actions: <Widget>[
-
-          // LOG OUT BUTTON
-          FlatButton(
-            child: Text(AppTranslations.of(context).text("logout"),
-                style: TextStyle(fontSize: 18, color: Colors.white)),
-            onPressed: () {},
-          ),
-
           // HELP BUTTON
           IconButton(
             icon: Icon(Icons.help_outline, size: 29),
@@ -404,17 +465,27 @@ class _PatientInfoState extends State<PatientInfo> {
             },
           ),
         ]),
-        body: ListView(children: <Widget>[
+        body: ListView(controller: _scrollController, children: <Widget>[
           GestureDetector(
             onTap: () => _dismissKeyboard(),
             child: Column(
               children: <Widget>[
-
                 // **PART 1: BASIC PATIENT INFO**
                 // LOCATION TEXTFIELD
                 Padding(
+                  padding: EdgeInsets.only(left: 24, right: 24, top: 50),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Text(AppTranslations.of(context).text("location"),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        )),
+                  ),
+                ),
+                Padding(
                   padding:
-                      EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 10),
+                      EdgeInsets.only(left: 24, right: 24, top: 10, bottom: 10),
                   child: TextField(
                     controller: locationController,
                     onChanged: (text) {
@@ -422,17 +493,29 @@ class _PatientInfoState extends State<PatientInfo> {
                     },
                     keyboardType: TextInputType.text,
                     decoration: InputDecoration(
-                        labelText: AppTranslations.of(context).text("location"),
                         labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
 
                 // PATIENT'S NAME TEXTFIELD
                 Padding(
+                  padding: EdgeInsets.only(left: 24, right: 24, top: 24),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Text(
+                        AppTranslations.of(context)
+                            .text("personal_particulars"),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        )),
+                  ),
+                ),
+                Padding(
                   padding:
-                      EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 10),
+                      EdgeInsets.only(left: 24, right: 24, top: 10, bottom: 10),
                   child: TextField(
                     controller: nameController,
                     onChanged: (text) {
@@ -443,7 +526,7 @@ class _PatientInfoState extends State<PatientInfo> {
                         labelText: AppTranslations.of(context).text("name"),
                         labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
 
@@ -461,7 +544,7 @@ class _PatientInfoState extends State<PatientInfo> {
                             AppTranslations.of(context).text("description"),
                         labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
 
@@ -476,7 +559,7 @@ class _PatientInfoState extends State<PatientInfo> {
                     Padding(
                       padding: EdgeInsets.all(10),
                       child: Radio(
-                        groupValue: _genderValue,
+                        groupValue: genderValue,
                         value: 0,
                         onChanged: _genderChange,
                       ),
@@ -486,7 +569,7 @@ class _PatientInfoState extends State<PatientInfo> {
                     Padding(
                       padding: EdgeInsets.all(10),
                       child: Radio(
-                        groupValue: _genderValue,
+                        groupValue: genderValue,
                         value: 1,
                         onChanged: _genderChange,
                       ),
@@ -507,7 +590,7 @@ class _PatientInfoState extends State<PatientInfo> {
                         labelText: AppTranslations.of(context).text("contact"),
                         labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
 
@@ -524,7 +607,7 @@ class _PatientInfoState extends State<PatientInfo> {
                         labelText: AppTranslations.of(context).text("hkid"),
                         labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
 
@@ -539,7 +622,7 @@ class _PatientInfoState extends State<PatientInfo> {
                     Padding(
                       padding: EdgeInsets.all(8),
                       child: Radio(
-                        groupValue: _cssaValue,
+                        groupValue: cssaValue,
                         value: 0,
                         onChanged: _cssaChange,
                       ),
@@ -549,7 +632,7 @@ class _PatientInfoState extends State<PatientInfo> {
                     Padding(
                       padding: EdgeInsets.all(8),
                       child: Radio(
-                        groupValue: _cssaValue,
+                        groupValue: cssaValue,
                         value: 1,
                         onChanged: _cssaChange,
                       ),
@@ -583,10 +666,8 @@ class _PatientInfoState extends State<PatientInfo> {
                   child: TextField(
                     controller: ageController,
                     onChanged: (text) {
-                      print(agestring);
                       setState(() {
                         agestring = text;
-                        
                       });
                     },
                     keyboardType: TextInputType.number,
@@ -594,7 +675,7 @@ class _PatientInfoState extends State<PatientInfo> {
                         labelText: AppTranslations.of(context).text("age"),
                         labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
 
@@ -607,142 +688,209 @@ class _PatientInfoState extends State<PatientInfo> {
                       _persistPatientInfo();
                       _saveRecord();
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => NewRecord()),
-                        );
+                        context,
+                        MaterialPageRoute(builder: (context) => NewRecord()),
+                      );
                       setState(() {
                         reject = true;
                       });
                     },
                   ),
                 ),
-                Divider(),
-                // **PART 2: BASIC PATIENT'S HEALTH RECORD**
 
-                // HEART RATE TEXTFIELD
+                // **PART 2: GENERAL MEDICAL DATA**
+                Padding(
+                  padding: EdgeInsets.only(left: 24, right: 24, top: 20),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Text(
+                        AppTranslations.of(context)
+                            .text("general_medical_data"),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        )),
+                  ),
+                ),
                 Padding(
                   padding:
-                      EdgeInsets.only(left: 24, right: 24, top: 20, bottom: 5),
-                  child: TextField(
-                    controller: heartrateController,
-                    onChanged: (text) {
-                      heartrate = text;
-                    },
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        labelText:
-                            AppTranslations.of(context).text("heart_rate"),
-                        labelStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
-                  ),
-                ),
+                      EdgeInsets.only(left: 24, right: 24, top: 0, bottom: 5),
+                  child: Row(
+                    children: <Widget>[
+                      Flexible(
+                        child: Column(
+                          children: <Widget>[
+                            // HEART RATE TEXTFIELD
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: TextField(
+                                controller: heartrateController,
+                                onChanged: (text) {
+                                  heartrate = text;
+                                },
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                    labelText: AppTranslations.of(context)
+                                        .text("heart_rate"),
+                                    labelStyle: TextStyle(fontSize: 16),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5))),
+                              ),
+                            ),
 
-                // BLOOD PRESSURE TEXTFIELD
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
-                  child: TextField(
-                    controller: bloodpressureController,
-                    onChanged: (text) {
-                      bloodpressure = text;
-                    },
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        labelText:
-                            AppTranslations.of(context).text("blood_pressure"),
-                        labelStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
-                  ),
-                ),
+                            // BLOOD PRESSURE TEXTFIELD
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: TextField(
+                                controller: bloodpressureController,
+                                onChanged: (text) {
+                                  bloodpressure = text;
+                                },
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                    labelText: AppTranslations.of(context)
+                                        .text("blood_pressure"),
+                                    labelStyle: TextStyle(fontSize: 16),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5))),
+                              ),
+                            ),
 
-                // BLOOD GLUCOSE TEXTFIELD
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
-                  child: TextField(
-                    controller: bloodglucoseController,
-                    onChanged: (text) {
-                      bloodglucose = text;
-                    },
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        labelText:
-                            AppTranslations.of(context).text("blood_glucose"),
-                        labelStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
-                  ),
-                ),
+                            // BLOOD GLUCOSE TEXTFIELD
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: TextField(
+                                controller: bloodglucoseController,
+                                onChanged: (text) {
+                                  bloodglucose = text;
+                                },
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                    labelText: AppTranslations.of(context)
+                                        .text("blood_glucose"),
+                                    labelStyle: TextStyle(fontSize: 16),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5))),
+                              ),
+                            ),
 
-                // BODY HEIGHT TEXTFIELD
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
-                  child: TextField(
-                    controller: bodyheightController,
-                    onChanged: (text) {
-                      bodyheight = text;
-                    },
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        labelText:
-                            AppTranslations.of(context).text("body_height"),
-                        labelStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
-                  ),
-                ),
+                            // BODY WEIGHT TEXTFIELD
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: TextField(
+                                controller: bodyweightController,
+                                onChanged: (text) {
+                                  bodyweight = text;
+                                },
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                    labelText: AppTranslations.of(context)
+                                        .text("body_weight"),
+                                    labelStyle: TextStyle(fontSize: 16),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5))),
+                              ),
+                            ),
 
-                // BODY WEIGHT TEXTFIELD
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
-                  child: TextField(
-                    controller: bodyweightController,
-                    onChanged: (text) {
-                      bodyweight = text;
-                    },
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        labelText:
-                            AppTranslations.of(context).text("body_weight"),
-                        labelStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
-                  ),
-                ),
+                            // BODY HEIGHT TEXTFIELD
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: TextField(
+                                controller: bodyheightController,
+                                onChanged: (text) {
+                                  bodyheight = text;
+                                },
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                    labelText: AppTranslations.of(context)
+                                        .text("body_height"),
+                                    labelStyle: TextStyle(fontSize: 16),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5))),
+                              ),
+                            ),
 
-                // BMI TEXTFIELD
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
-                  child: TextField(
-                    controller: bmiController,
-                    onChanged: (text) {
-                      bmi = text;
-                    },
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        labelText: AppTranslations.of(context).text("bmi"),
-                        labelStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
-                  ),
-                ),
+                            // BMI TEXTFIELD
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: TextField(
+                                controller: bmiController,
+                                onChanged: (text) {
+                                  bmi = text;
+                                },
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                    labelText:
+                                        AppTranslations.of(context).text("bmi"),
+                                    labelStyle: TextStyle(fontSize: 16),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5))),
+                              ),
+                            ),
 
-                // RESPIRATION RATE TEXTFIELD
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
-                  child: TextField(
-                    controller: respirationrateController,
-                    onChanged: (text) {
-                      respirationrate = text;
-                    },
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                        labelText: AppTranslations.of(context)
-                            .text("respiration_rate"),
-                        labelStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            // RESPIRATION RATE
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: TextField(
+                                controller: respirationrateController,
+                                onChanged: (text) {
+                                  respirationrate = text;
+                                },
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                    labelText: AppTranslations.of(context)
+                                        .text("respiration_rate"),
+                                    labelStyle: TextStyle(fontSize: 16),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5))),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: <Widget>[
+                          Padding(
+                              padding: EdgeInsets.only(
+                                  top: 35, left: 10, bottom: 50),
+                              child:
+                                  Text('bpm', style: TextStyle(fontSize: 16))),
+                          Padding(
+                              padding: EdgeInsets.only(left: 10, bottom: 50),
+                              child:
+                                  Text('mmHg', style: TextStyle(fontSize: 16))),
+                          Padding(
+                              padding: EdgeInsets.only(left: 10, bottom: 50),
+                              child: Text('mmol/L',
+                                  style: TextStyle(fontSize: 16))),
+                          Padding(
+                              padding: EdgeInsets.only(left: 10, bottom: 50),
+                              child:
+                                  Text('cm', style: TextStyle(fontSize: 16))),
+                          Padding(
+                              padding: EdgeInsets.only(left: 10, bottom: 50),
+                              child:
+                                  Text('kg', style: TextStyle(fontSize: 16))),
+                          Padding(
+                              padding: EdgeInsets.only(left: 10, bottom: 50),
+                              child: Text('kg/m\u00B2',
+                                  style: TextStyle(fontSize: 16))),
+                          Padding(
+                              padding: EdgeInsets.only(left: 10, bottom: 50),
+                              child: Text('breaths/min',
+                                  style: TextStyle(fontSize: 16))),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
 
@@ -759,10 +907,10 @@ class _PatientInfoState extends State<PatientInfo> {
 
                           // SMOKING CHECKBOX
                           new Checkbox(
-                            value: _smoking,
+                            value: smoking,
                             onChanged: (bool newValue) {
                               setState(() {
-                                _smoking = newValue;
+                                smoking = newValue;
                               });
                             },
                           ),
@@ -775,10 +923,10 @@ class _PatientInfoState extends State<PatientInfo> {
 
                           // ALCOHOL CHECKBOX
                           new Checkbox(
-                            value: _alcohol,
+                            value: alcohol,
                             onChanged: (bool newValue) {
                               setState(() {
-                                _alcohol = newValue;
+                                alcohol = newValue;
                               });
                             },
                           ),
@@ -791,10 +939,10 @@ class _PatientInfoState extends State<PatientInfo> {
 
                           // DRUG ABUSE CHECKBOX
                           new Checkbox(
-                            value: _drugs,
+                            value: drugs,
                             onChanged: (bool newValue) {
                               setState(() {
-                                _drugs = newValue;
+                                drugs = newValue;
                               });
                             },
                           ),
@@ -806,11 +954,14 @@ class _PatientInfoState extends State<PatientInfo> {
 
                 // ADDITIONAL INFO TEXTFIELD
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 5, horizontal: 24),
-                  child: Text(
-                      AppTranslations.of(context)
-                          .text("additional_information1"),
-                      style: TextStyle(fontSize: 16)),
+                  padding: EdgeInsets.only(top: 5, left: 24, right: 24),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                        AppTranslations.of(context)
+                            .text("additional_information1"),
+                        style: TextStyle(fontSize: 16)),
+                  ),
                 ),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 5),
@@ -825,20 +976,36 @@ class _PatientInfoState extends State<PatientInfo> {
                             .text("e.g._lost_weight"),
                         labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
 
                 Padding(padding: EdgeInsets.symmetric(vertical: 10)),
 
-                Divider(),
+                Padding(
+                  padding: EdgeInsets.only(left: 24, right: 24, top: 50),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Text(
+                        AppTranslations.of(context)
+                            .text("additional_description"),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        )),
+                  ),
+                ),
+
                 // ** PART 3: FURTHER HEALTH DESCRIPTIONS**
                 // WOUND DESCRIPTION TEXTFIELD
                 Padding(
                   padding:
                       EdgeInsets.only(top: 24, bottom: 5, left: 28, right: 24),
-                  child: Text(AppTranslations.of(context).text("wound"),
-                      style: TextStyle(fontSize: 16)),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppTranslations.of(context).text("wound"),
+                        style: TextStyle(fontSize: 16)),
+                  ),
                 ),
                 Padding(
                   padding: EdgeInsets.only(bottom: 20, left: 24, right: 24),
@@ -850,15 +1017,19 @@ class _PatientInfoState extends State<PatientInfo> {
                           labelStyle: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8))),
+                              borderRadius: BorderRadius.circular(5))),
                       maxLines: null),
                 ),
 
                 // MENTAL ISSUES DESCRIPTION TEXTIELD
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 28),
-                  child: Text(AppTranslations.of(context).text("mental_issues"),
-                      style: TextStyle(fontSize: 16)),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                        AppTranslations.of(context).text("mental_issues"),
+                        style: TextStyle(fontSize: 16)),
+                  ),
                 ),
                 Padding(
                   padding:
@@ -871,7 +1042,7 @@ class _PatientInfoState extends State<PatientInfo> {
                           labelStyle: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8))),
+                              borderRadius: BorderRadius.circular(5))),
                       maxLines: null),
                 ),
 
@@ -879,10 +1050,13 @@ class _PatientInfoState extends State<PatientInfo> {
                 Padding(
                   padding:
                       EdgeInsets.only(top: 5, bottom: 5, left: 28, right: 24),
-                  child: Text(
-                      AppTranslations.of(context)
-                          .text("previous_medical_records"),
-                      style: TextStyle(fontSize: 16)),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                        AppTranslations.of(context)
+                            .text("previous_medical_records"),
+                        style: TextStyle(fontSize: 16)),
+                  ),
                 ),
                 Padding(
                   padding:
@@ -895,17 +1069,20 @@ class _PatientInfoState extends State<PatientInfo> {
                           labelStyle: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8))),
+                              borderRadius: BorderRadius.circular(5))),
                       maxLines: null),
                 ),
 
                 // ADDITIONAL INFO TEXTFIELD
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 28),
-                  child: Text(
-                      AppTranslations.of(context)
-                          .text("additional_information2"),
-                      style: TextStyle(fontSize: 16)),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                        AppTranslations.of(context)
+                            .text("additional_information2"),
+                        style: TextStyle(fontSize: 16)),
+                  ),
                 ),
                 Padding(
                   padding:
@@ -921,7 +1098,7 @@ class _PatientInfoState extends State<PatientInfo> {
                           labelStyle: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8))),
+                              borderRadius: BorderRadius.circular(5))),
                       maxLines: null),
                 ),
 
@@ -975,7 +1152,8 @@ class _PatientInfoState extends State<PatientInfo> {
                       alignment: Alignment.topRight,
                       child: Padding(
                         padding: EdgeInsets.only(right: 24),
-                        child: Text('$numfiles/5'), // COUNTS NUMBER OF PHOTOS UPLOADED BY USER
+                        child: Text(
+                            '$numfiles/5'), // COUNTS NUMBER OF PHOTOS UPLOADED BY USER
                       ),
                     ),
                   ],

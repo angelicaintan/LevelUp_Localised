@@ -5,6 +5,7 @@ import 'main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'app_translations.dart';
+import 'records.dart';
 
 class NewRecord extends StatefulWidget {
   @override
@@ -24,6 +25,7 @@ class _NewRecordState extends State<NewRecord> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
         appBar: AppBar(actions: <Widget>[
 
@@ -69,7 +71,7 @@ class _NewRecordState extends State<NewRecord> {
                   child: Text(AppTranslations.of(context).text("new_record"), style: TextStyle(fontSize: 21)),
                   onPressed: () {
                     setState(() {
-                      accessdate = DateFormat('yyyy-MM-dd').format(DateTime.now());;
+                      accessdate = DateFormat('yyyy-MM-dd').format(DateTime.now());
                     });
                     _persistaccessdate();
                     Navigator.push(

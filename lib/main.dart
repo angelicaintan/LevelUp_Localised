@@ -9,8 +9,76 @@ import 'app_translations.dart';
 import 'newrecord.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'records.dart';
+
+/*
+class InheritedRecords extends InheritedWidget {
+  final List<Record> records;
+
+  InheritedRecords({this.records, Widget child}) : super(child: child);
+
+  @override
+  bool updateShouldNotify(InheritedWidget oldWidget) => true;
+
+  static InheritedRecords of(BuildContext context) =>
+    context.inheritFromWidgetOfExactType(InheritedRecords);
+}
+*/
+
+class MyInherited extends StatefulWidget {
+  Widget child;
+
+  MyInherited({this.child});
+
+  @override
+  MyInheritedState createState() => new MyInheritedState();
+
+  static MyInheritedState of(BuildContext context) {
+    return (context.inheritFromWidgetOfExactType(_MyInherited) as _MyInherited).data;
+  }
+}
+
+class MyInheritedState extends State<MyInherited> {
+  final List<Record> records = [];
+
+  // only expose a getter to prevent bad usage
+  List<Record> get myField => records;
+
+  void newrecord(Record newrecord) {
+    setState(() {
+      records.add(newrecord);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return new _MyInherited(
+      data: this,
+      child: widget.child,
+    );
+  }
+}
+
+/// Only has MyInheritedState as field.
+class _MyInherited extends InheritedWidget {
+  final MyInheritedState data;
+
+  _MyInherited({Key key, this.data, Widget child}) : super(key: key, child: child);
+
+  @override
+  bool updateShouldNotify(_MyInherited old) {
+    return true;
+  }
+}
+
+/*
 void main() {
   runApp(LocalisedApp());
+}
+*/
+
+void main() {
+  runApp(new MyInherited(child: new LocalisedApp()));
 }
 
 class LocalisedApp extends StatefulWidget {
@@ -118,7 +186,6 @@ class _MyHomePageState extends State<MyHomePage> {
             // Here we take the value from the MyHomePage object that was created by
             // the App.build method, and use it to set our appbar title.
             actions: <Widget>[
-
               // HELP BUTTON
               IconButton(
                 icon: Icon(Icons.help_outline, size: 29),
@@ -132,7 +199,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
 
               // BUTTON THAT GOES TO THE LANGUAGE SELECTOR PAGE
-              LanguageSelectorIconButton(), 
+              LanguageSelectorIconButton(),
             ]),
         body: ListView(children: <Widget>[
           GestureDetector(
@@ -154,10 +221,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     decoration: InputDecoration(
                         labelText:
                             AppTranslations.of(context).text('access_code'),
-                        labelStyle: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+                        labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
 
@@ -171,15 +237,15 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                     keyboardType: TextInputType.text,
                     decoration: InputDecoration(
-                        labelText: AppTranslations.of(context).text('user_name'),
-                        labelStyle: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+                        labelText:
+                            AppTranslations.of(context).text('user_name'),
+                        labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
 
-                 // TEXTFIELD FOR VOLUNTEER'S EMAIL ADDRESS
+                // TEXTFIELD FOR VOLUNTEER'S EMAIL ADDRESS
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                   child: TextField(
@@ -189,11 +255,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                        labelText: AppTranslations.of(context).text('email_address'),
-                        labelStyle: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+                        labelText:
+                            AppTranslations.of(context).text('email_address'),
+                        labelStyle: TextStyle(fontSize: 16),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8))),
+                            borderRadius: BorderRadius.circular(5))),
                   ),
                 ),
                 Padding(

@@ -18,6 +18,7 @@
   "next": "下一頁",
 
   "location": "位置",
+  "personal_particulars": "Personal Particulars",
   "name": "姓名",
   "description": "容貌及環境特徵",
   "gender": "性别:         女",
@@ -35,6 +36,7 @@
   "cancel": "取消",
   "reject": "拒絕",
 
+  "general_medical_data": "General Medical Data",
   "heart_rate": "心率",
   "blood_pressure": "血壓",
   "blood_glucose": "血糖",
@@ -48,6 +50,7 @@
   "additional_information1": "額外資料",
   "e.g._lost_weight": "例如：最近體重急降",
 
+  "additional_description": "Additional Description",
   "wound": "傷口",
   "mental_issues": "精神病紀錄",
   "previous_medical_records": "過往病歷",
