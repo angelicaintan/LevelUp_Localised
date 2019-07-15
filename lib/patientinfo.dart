@@ -15,6 +15,7 @@ import 'records.dart';
 import 'main.dart';
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
+import 'files.dart';
 
 class PatientInfo extends StatefulWidget {
   @override
@@ -29,8 +30,12 @@ class _PatientInfoState extends State<PatientInfo> {
   final _scrollController = new ScrollController();
 
   // CREATE NEW RECORD
+  int num_records = 0;
+  String index = DateFormat('yyyy-MM-dd-hh:mm:ss-').format(DateTime.now());
+
   Record newrecord;
 
+  String accesscode;
   String username;
   String emailaddress;
 
@@ -312,7 +317,7 @@ class _PatientInfoState extends State<PatientInfo> {
       onCreate: (db, version) {
         // Run the CREATE TABLE statement on the database.
         return db.execute(
-          "CREATE TABLE records (username TEXT, angelica TEXT, intan INTEGER)",
+          "CREATE TABLE records (record_no STRING PRIMARY KEY, accesscode TEXT, username TEXT, emailaddress TEXT, location TEXT, name TEXT, description TEXT, gender TEXT, contact TEXT, hkid TEXT, cssa INTEGER, dob TEXT, age INTEGER, reject INTEGER, heartrate TEXT, bloodpressure TEXT, bloodglucose TEXT, bodyheight TEXT, bodyweight TEXT, bmi TEXT, respirationrate TEXT, smoking INTEGER, alcohol INTEGER, drugs INTEGER, additionalinfo1 TEXT, wound TEXT, mentalissues TEXT, pastmedrecords TEXT, additionalinfo2 TEXT)"
         );
       },
       // Set the version. This executes the onCreate function and provides a
@@ -404,7 +409,10 @@ class _PatientInfoState extends State<PatientInfo> {
                 onPressed: () {
                   //_saveRecord();
                   //_uploadPicture();
+                  index += num_records.toString();
                   Record newrecord = new Record(
+                      index,
+                      accesscode,
                       username,
                       emailaddress,
                       location,
@@ -433,10 +441,11 @@ class _PatientInfoState extends State<PatientInfo> {
                       pastmedrecords,
                       additionalinfo2);
                   MyInherited.of(context).newrecord(newrecord);
-                  insertRecord(MyInherited.of(context).records[0]);
+                  insertRecord(MyInherited.of(context).records[num_records]);
+                  ++num_records;
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => LogOut()),
+                    MaterialPageRoute(builder: (context) => UserFiles()),
                   );
                 }),
             new FlatButton(

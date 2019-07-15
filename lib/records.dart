@@ -1,5 +1,7 @@
 class Record {
   Record(
+      String index,
+      String accesscode,
       String username,
       String emailaddress,
       String location,
@@ -27,6 +29,8 @@ class Record {
       String mentalissues,
       String pastmedrecords,
       String additionalinfo2) {
+    _index = index;
+    _accesscode = accesscode;
     _username = username;
     _emailaddress = emailaddress;
     _location = location;
@@ -56,6 +60,8 @@ class Record {
   }
 
   // VARIABLES FOR USER IDENTITY, LOCATION, AND PATIENT'S PERSONAL PARTICULARS (part 1 of the record)
+  String _index;
+  String _accesscode;
   String _username;
   String _emailaddress;
   String _location;
@@ -89,6 +95,12 @@ class Record {
   String _additionalinfo2;
 
   // GETTERS part 1
+  String get_index() {
+    return _index;
+  }
+  String get_accesscode() {
+    return _accesscode;
+  }
   String get_username() {
     return _username;
   }
@@ -177,33 +189,35 @@ class Record {
 
   Map<String, dynamic> toMap() {
     return {
+      'record_no': _index,
+      'accesscode': _accesscode,
       'username': _username,
-      // 'emailaddress': _emailaddress,
-      // 'location': _location,
-      'angelica': _name,
-      // 'description': _description,
-      // 'gender': _gender,
-      //'contact': _contact,
-      //'hkid': _hkid,
-      //'cssa': _cssa,
-      // 'dob': _dob,
-      'intan': _age,
-      //'reject': _reject,
-      //'heartrate': _heartrate,
-      //'bloodpressure': _bloodpressure,
-      //'bloodglucose': _bloodglucose,
-      //'bodyheight': _bodyheight,
-      //'bodyweight': _bodyweight,
-      //'bmi': _bmi,
-      //'respirationrate': _respirationrate,
-      //'smoking': _smoking,
-      //'alcohol': _alcohol,
-      //'drugs': _drugs,
-      //'additionalinfo1': _additionalinfo1,
-      //'wound': _wound,
-      //'mentalissues': _mentalissues,
-      //'pastmedrecords': _pastmedrecords,
-      //'additionalinfo2': _additionalinfo2
+      'emailaddress': _emailaddress,
+      'location': _location,
+      'name': _name,
+      'description': _description,
+      'gender': _gender,
+      'contact': _contact,
+      'hkid': _hkid,
+      'cssa': _cssa,
+      'dob': _dob,
+      'age': _age,
+      'reject': _reject,
+      'heartrate': _heartrate,
+      'bloodpressure': _bloodpressure,
+      'bloodglucose': _bloodglucose,
+      'bodyheight': _bodyheight,
+      'bodyweight': _bodyweight,
+      'bmi': _bmi,
+      'respirationrate': _respirationrate,
+      'smoking': _smoking,
+      'alcohol': _alcohol,
+      'drugs': _drugs,
+      'additionalinfo1': _additionalinfo1,
+      'wound': _wound,
+      'mentalissues': _mentalissues,
+      'pastmedrecords': _pastmedrecords,
+      'additionalinfo2': _additionalinfo2
     };
   }
  
