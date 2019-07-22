@@ -27,7 +27,7 @@ class _NewRecordState extends State<NewRecord> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-        appBar: AppBar(actions: <Widget>[
+        appBar: AppBar(leading: new Container(), actions: <Widget>[
 
           // LOG OUT BUTTON
           FlatButton(

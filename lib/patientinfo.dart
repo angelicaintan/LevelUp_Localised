@@ -39,6 +39,8 @@ class _PatientInfoState extends State<PatientInfo> {
   String username;
   String emailaddress;
 
+  String accessdate;
+
   // VARIABLES FOR THE BASIC INFO OF THE PATIENT (part 1 of the record)
   String location;
   String name;
@@ -98,6 +100,13 @@ class _PatientInfoState extends State<PatientInfo> {
 
   List<File> images = new List(5);
   int numfiles = 0;
+
+  _getaccessdate() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      accessdate = prefs.getString('accessdate');
+    });
+  }
 
   // FUNCTION THAT CHANGES THE VALUE OF THE GENDER BOOL
   void _genderChange(int value) {
@@ -317,7 +326,7 @@ class _PatientInfoState extends State<PatientInfo> {
       onCreate: (db, version) {
         // Run the CREATE TABLE statement on the database.
         return db.execute(
-          "CREATE TABLE records (record_no STRING PRIMARY KEY, accesscode TEXT, username TEXT, emailaddress TEXT, location TEXT, name TEXT, description TEXT, gender TEXT, contact TEXT, hkid TEXT, cssa INTEGER, dob TEXT, age INTEGER, reject INTEGER, heartrate TEXT, bloodpressure TEXT, bloodglucose TEXT, bodyheight TEXT, bodyweight TEXT, bmi TEXT, respirationrate TEXT, smoking INTEGER, alcohol INTEGER, drugs INTEGER, additionalinfo1 TEXT, wound TEXT, mentalissues TEXT, pastmedrecords TEXT, additionalinfo2 TEXT)"
+          "CREATE TABLE records (record_no STRING PRIMARY KEY, accesscode TEXT, username TEXT, emailaddress TEXT, accessdate TEXT, location TEXT, name TEXT, description TEXT, gender TEXT, contact TEXT, hkid TEXT, cssa INTEGER, dob TEXT, age INTEGER, reject INTEGER, heartrate TEXT, bloodpressure TEXT, bloodglucose TEXT, bodyheight TEXT, bodyweight TEXT, bmi TEXT, respirationrate TEXT, smoking INTEGER, alcohol INTEGER, drugs INTEGER, additionalinfo1 TEXT, wound TEXT, mentalissues TEXT, pastmedrecords TEXT, additionalinfo2 TEXT, image0 BLOB, image1 BLOB, image2 BLOB, image3 BLOB, image4 BLOB)"
         );
       },
       // Set the version. This executes the onCreate function and provides a
@@ -401,20 +410,31 @@ class _PatientInfoState extends State<PatientInfo> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: new Text(AppTranslations.of(context).text("send_to")),
+          title: new Text(AppTranslations.of(context).text("finish?")),
           content: new Text(AppTranslations.of(context).text("you_cant_edit")),
           actions: <Widget>[
             new FlatButton(
-                child: Text(AppTranslations.of(context).text("send")),
-                onPressed: () {
+                child: Text(AppTranslations.of(context).text("finish")),
+                onPressed: () async {
                   //_saveRecord();
                   //_uploadPicture();
-                  index += num_records.toString();
+
+                  index += num_records.toString(); // creates index that is unique for each data entry
+
+                  // convert images to bytes
+                  List<List<int>> bytes = new List (images.length);
+                  for (int i=0; images[i] != null ; ++i) {
+                    bytes[i] = await images[i].readAsBytes();
+                  }
+
+                  _getaccessdate();
+
                   Record newrecord = new Record(
                       index,
                       accesscode,
                       username,
                       emailaddress,
+                      accessdate,
                       location,
                       name,
                       description,
@@ -439,7 +459,8 @@ class _PatientInfoState extends State<PatientInfo> {
                       wound,
                       mentalissues,
                       pastmedrecords,
-                      additionalinfo2);
+                      additionalinfo2,
+                      bytes);
                   MyInherited.of(context).newrecord(newrecord);
                   insertRecord(MyInherited.of(context).records[num_records]);
                   ++num_records;

@@ -1,9 +1,12 @@
+import 'dart:io';
+
 class Record {
   Record(
       String index,
       String accesscode,
       String username,
       String emailaddress,
+      String accessdate,
       String location,
       String name,
       String description,
@@ -28,11 +31,13 @@ class Record {
       String wound,
       String mentalissues,
       String pastmedrecords,
-      String additionalinfo2) {
+      String additionalinfo2,
+      List<List<int>> imagebytes) {
     _index = index;
     _accesscode = accesscode;
     _username = username;
     _emailaddress = emailaddress;
+    _accessdate = accessdate;
     _location = location;
     _name = name;
     _description = description;
@@ -57,6 +62,8 @@ class Record {
     _mentalissues = mentalissues;
     _pastmedrecords = pastmedrecords;
     _additionalinfo2 = additionalinfo2;
+
+    _imagebytes = imagebytes;
   }
 
   // VARIABLES FOR USER IDENTITY, LOCATION, AND PATIENT'S PERSONAL PARTICULARS (part 1 of the record)
@@ -64,6 +71,7 @@ class Record {
   String _accesscode;
   String _username;
   String _emailaddress;
+  String _accessdate;
   String _location;
   String _name;
   String _description;
@@ -94,6 +102,8 @@ class Record {
   String _pastmedrecords;
   String _additionalinfo2;
 
+  List<List<int>> _imagebytes;
+
   // GETTERS part 1
   String get_index() {
     return _index;
@@ -106,6 +116,9 @@ class Record {
   }
   String get_emailaddress() {
     return _emailaddress;
+  }
+  String get_accessdate() {
+    return _accessdate;
   }
   String get_location() {
     return _location;
@@ -186,6 +199,9 @@ class Record {
   String get_additionalinfo2() {
     return _additionalinfo2;
   }
+  List<List<int>> get_imagebytes() {
+    return _imagebytes;
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -217,7 +233,12 @@ class Record {
       'wound': _wound,
       'mentalissues': _mentalissues,
       'pastmedrecords': _pastmedrecords,
-      'additionalinfo2': _additionalinfo2
+      'additionalinfo2': _additionalinfo2,
+      'image0': _imagebytes[0],
+      'image1': _imagebytes[1],
+      'image2':_imagebytes[2],
+      'image3':_imagebytes[3],
+      'image4':_imagebytes[4],
     };
   }
  

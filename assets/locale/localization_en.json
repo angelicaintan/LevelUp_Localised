@@ -56,9 +56,9 @@
   "you_can_upload": "You can upload up to 5 photos from your phone",
   "finish_record": "Finish Record",
   "delete": "Delete",
-  "send": "Send",
-  "send_to": "Send records to salvation army?",
-  "you_cant_edit": "You can't edit the records anymore after sending.",
+  "finish": "Finish",
+  "finish?": "Finish writing the record?",
+  "you_cant_edit": "You can't edit the records anymore after finishing.",
   "error_photos": "Error! You may only upload 5 photos",
   "remove_photo": "Remove a photo to replace it with a new one.",
 
