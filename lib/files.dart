@@ -23,212 +23,232 @@ class UserFiles extends StatefulWidget {
 }
 
 class _UserFilesState extends State<UserFiles> {
+  List<Record> test = [];
+  int numfiles = 0;
+
+  Future<void> _retrieveRecords() async {
+    final Future<Database> database = openDatabase(
+      // Set the path to the database.
+      path.join(await getDatabasesPath(), 'records_database.db'),
+
+      // When the database is first created, create a table to store dogs.
+      onCreate: (db, version) {
+        // Run the CREATE TABLE statement on the database.
+        return db.execute(
+            "CREATE TABLE records (record_no STRING PRIMARY KEY, accesscode TEXT, username TEXT, emailaddress TEXT, accessdate TEXT, location TEXT, name TEXT, description TEXT, gender TEXT, contact TEXT, hkid TEXT, cssa INTEGER, dob TEXT, age INTEGER, reject INTEGER, heartrate TEXT, bloodpressure TEXT, bloodglucose TEXT, bodyheight TEXT, bodyweight TEXT, bmi TEXT, respirationrate TEXT, smoking INTEGER, alcohol INTEGER, drugs INTEGER, additionalinfo1 TEXT, wound TEXT, mentalissues TEXT, pastmedrecords TEXT, additionalinfo2 TEXT, image0 BLOB, image1 BLOB, image2 BLOB, image3 BLOB, image4 BLOB)");
+      },
+      // Set the version. This executes the onCreate function and provides a
+      // path to perform database upgrades and downgrades.
+      version: 1,
+    );
+
+    // Get a reference to the database.
+    final Database db = await database;
+
+    // Query the table for all The Records.
+    final List<Map<String, dynamic>> maps = await db.query('records');
+
+    // Convert to records
+    for (int i = 0; i < maps.length; ++i) {
+      Record newrecord = new Record(
+        maps[i]['record_no'],
+        maps[i]['accesscode'],
+        maps[i]['username'],
+        maps[i]['emailaddress'],
+        maps[i]['accessdate'],
+        maps[i]['location'],
+        maps[i]['name'],
+        maps[i]['description'],
+        maps[i]['gender'],
+        maps[i]['contact'],
+        maps[i]['hkid'],
+        maps[i]['cssa'],
+        maps[i]['dob'],
+        maps[i]['age'],
+        maps[i]['reject'] == 0 ? false : true,
+        maps[i]['heartrate'],
+        maps[i]['bloodpressure'],
+        maps[i]['bloodglucose'],
+        maps[i]['bodyheight'],
+        maps[i]['bodyweight'],
+        maps[i]['bmi'],
+        maps[i]['respirationrate'],
+        maps[i]['smoking'] == 0 ? false : true,
+        maps[i]['alcohol'] == 0 ? false : true,
+        maps[i]['drugs'] == 0 ? false : true,
+        maps[i]['additionalinfo1'],
+        maps[i]['wound'],
+        maps[i]['mentalissues'],
+        maps[i]['pastmedrecords'],
+        maps[i]['additionalinfo2'],
+        maps[i]['bytes'],
+      );
+
+      setState(() {
+        test.add(newrecord);
+        ++numfiles;
+      });
+      // print(i);
+    }
+  }
+
+  @override
+  void initState() {
+    setState(() {
+      _retrieveRecords();
+    });
+    super.initState();
+  }
+
+  void _deleteTest(int i) {
+    setState(() {
+      print("length = ${test.length}");
+      print("i = $i");
+      test.removeAt(i);
+      --numfiles;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    Future<void> _deleteRecords(final String record_no) async {
+      final Future<Database> database = openDatabase(
+        // Set the path to the database.
+        path.join(await getDatabasesPath(), 'records_database.db'),
+      );
+
+      // Get a reference to the database.
+      final db = await database;
+
+      // Remove the record from the Database.
+      await db.delete(
+        'records',
+        // Use a `where` clause to delete a specific record.
+        where: "record_no = ?",
+        // Pass the records's id as a whereArg to prevent SQL injection.
+        whereArgs: [record_no],
+      );
+    }
+
     void _showDialog() async {
       showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               title: new Text("Error! Unable to upload files"),
-              content: new Text("Please try again when device is connected to the internet."),
-                  // CircularProgressIndicator(),
+              content: new Text(
+                  "Please try again when device is connected to the internet."),
+              // CircularProgressIndicator(),
               actions: <Widget>[
                 new FlatButton(
                   child: Text("ok"),
-                    onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(context),
                 )
               ],
             );
           });
     }
 
-    List<Record> mock = new List(5);
-
-    Future<List<Record>> getRecords() async {
-      final Future<Database> database = openDatabase(
-        // Set the path to the database.
-        path.join(await getDatabasesPath(), 'records_database.db'),
-      );
-
-      // Get a reference to the database.
-      final Database db = await database;
-
-      // Query the table for all The Records.
-      final List<Map<String, dynamic>> maps = await db.query('records');
-
-      // Convert the List<Map<String, dynamic> into a List<Record>.
-      return List.generate(maps.length, (i) {
-        return Record(
-            maps[i]['record_no'],
-            maps[1]['accesscode'],
-            maps[i]['username'],
-            maps[i]['emailaddress'],
-            maps[i]['accessdate'],
-            maps[i]['location'],
-            maps[i]['name'],
-            maps[i]['description'],
-            maps[i]['gender'],
-            maps[i]['contact'],
-            maps[i]['hkid'],
-            maps[i]['cssa'] == 0 ? false : true,
-            maps[i]['dob'],
-            maps[i]['age'],
-            maps[i]['reject'] == 0 ? false : true,
-            maps[i]['heartrate'],
-            maps[i]['bloodpressure'],
-            maps[i]['bloodglucose'],
-            maps[i]['bodyheight'],
-            maps[i]['bodyweight'],
-            maps[i]['bmi'],
-            maps[i]['respirationrate'],
-            maps[i]['smoking'] == 0 ? false : true,
-            maps[i]['alcohol'] == 0 ? false : true,
-            maps[i]['drugs'] == 0 ? false : true,
-            maps[i]['additionalinfo1'],
-            maps[i]['wound'],
-            maps[i]['mentalissues'],
-            maps[i]['pastmedrecords'],
-            maps[i]['additionalinfo2'],
-            maps[i]['']);
-      });
+    Future<bool> _checkConnection() async {
+      try {
+        final result = await InternetAddress.lookup('google.com');
+        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+          return true;
+        }
+      } on SocketException catch (_) {
+        return false;
+      }
     }
 
-    //  FUNCTION THAT RETRIEVES THE RECORDS
-    Future<Null> _uploadRecords() async {
-      final Future<Database> database = openDatabase(
-        // Set the path to the database.
-        path.join(await getDatabasesPath(), 'records_database.db'),
-      );
-
-      // Get a reference to the database.
-      final Database db = await database;
-
-      // Query the table for all The Records.
-      final List<Map<String, dynamic>> maps = await db.query('records');
-
-      // test upload to firebase
+    Future<Null> _uploadRecords(final List<Map<String, dynamic>> maps) async {
+      int length = maps.length;
       var records = Firestore.instance.collection('Records').document();
 
-      int length = maps.length;
-
-      print(length);
-
       for (int i = 0; i < length; ++i) {
-        print("i = $i");
-
         Map<String, dynamic> recordMap = {
-          'accessCode': maps[i]['accesscode'] ?? 0,
-          'b. user-name': maps[i]['username'] ?? 0,
-          'c. user-contact': maps[i]['emailaddress'] ?? 0,
-          'accessDate': maps[i]['accessdate'] ?? 0,
-          'd. location': maps[i]['location'] ?? 0,
-          'name': maps[i]['name'] ?? 0,
-          'f. description': maps[i]['description'] ?? 0,
-          'g. gender': maps[i]['gender'] ?? 0,
-          'h. contact': maps[i]['contact'] ?? 0,
-          'HKID': maps[i]['hkid'] ?? 0,
-          'j. CSSA': maps[i]['cssa'] ?? 0,
-          'k. birthday': maps[i]['dob'] ?? 0,
-          'l. age': maps[i]['age'] ?? 0,
-          'm. reject': maps[i]['reject'] ?? 0,
-          'n. heart-rate': maps[i]['heartrate'] ?? 0,
-          'o. blood-pressure': maps[i]['bloodpressure'] ?? 0,
-          'p. blood-glucose': maps[i]['bloodglucose'] ?? 0,
-          'q. body-height': maps[i]['bodyheight'] ?? 0,
-          'r. body-weight': maps[i]['bodyweight'] ?? 0,
-          's. bmi': maps[i]['bmi'] ?? 0,
-          't. respiration-rate': maps[i]['respirationrate'] ?? 0,
-          'u. smoking': maps[i]['smoking'] ?? 0,
-          'v. alcohol': maps[i]['alcohol'] ?? 0,
-          'w. drugs': maps[i]['drugs'] ?? 0,
-          'x. additional-info1': maps[i]['additionalinfo1'] ?? 0,
-          'y. wound': maps[i]['wound'] ?? 0,
-          'z. mental-issues': maps[i]['mentalissues'] ?? 0,
-          'za. past-med-records': maps[i]['pastmedrecords'] ?? 0,
-          'zb. additional-info2': maps[i]['additionalinfo2'] ?? 0,
+          'accessCode': maps[i]['accesscode'],
+          'b. user-name': maps[i]['username'],
+          'c. user-contact': maps[i]['emailaddress'],
+          'accessDate': maps[i]['accessdate'],
+          'd. location': maps[i]['location'],
+          'name': maps[i]['name'],
+          'f. description': maps[i]['description'],
+          'g. gender': maps[i]['gender'],
+          'h. contact': maps[i]['contact'],
+          'HKID': maps[i]['hkid'],
+          'j. CSSA': maps[i]['cssa'],
+          'k. birthday': maps[i]['dob'],
+          'l. age': maps[i]['age'],
+          'm. reject': maps[i]['reject'],
+          'n. heart-rate': maps[i]['heartrate'],
+          'o. blood-pressure': maps[i]['bloodpressure'],
+          'p. blood-glucose': maps[i]['bloodglucose'],
+          'q. body-height': maps[i]['bodyheight'],
+          'r. body-weight': maps[i]['bodyweight'],
+          's. bmi': maps[i]['bmi'],
+          't. respiration-rate': maps[i]['respirationrate'],
+          'u. smoking': maps[i]['smoking'],
+          'v. alcohol': maps[i]['alcohol'],
+          'w. drugs': maps[i]['drugs'],
+          'x. additional-info1': maps[i]['additionalinfo1'],
+          'y. wound': maps[i]['wound'],
+          'z. mental-issues': maps[i]['mentalissues'],
+          'za. past-med-records': maps[i]['pastmedrecords'],
+          'zb. additional-info2': maps[i]['additionalinfo2'],
         };
 
-        records.setData(maps[i]);
+        records.setData(recordMap);
 
-        /*
         // upload photos
-        List<File> photos = new List(5);
-
         String accesscode = maps[i]['accesscode'];
         String username = maps[i]['username'];
-        String patientname = maps[i]['patientname'];
+        String patientname = maps[i]['name'];
         String accessdate = maps[i]['accessdate'];
 
-        print('here');
-        print(maps[i]['name']);
-
         for (int j = 0; maps[i]['image$j'] != null; ++j) {
-          print('here$j');
-
-          // Image temp = Image.memory(base64.decode(maps[i]['image$i']));
-
-          // photos[i] = temp;
-
-          /*
           final StorageReference firebaseStorageRef = FirebaseStorage.instance
               .ref()
               .child(
-                  '$accessdate-$accesscode-$username-$patientname-image$i.jpeg');
+                  '$accessdate-$accesscode-$username-$patientname-image$j.jpeg');
 
-           print('here4');
-          
           final StorageUploadTask task =
-              firebaseStorageRef.putData(base64.decode(maps[i]['image$i']));
-          */
-
-          print('here5');
+              firebaseStorageRef.putData(maps[i]['image$j']);
         }
-
-        print('here6');
-        */
       }
-
-      /*
-      // Convert the List<Map<String, dynamic> into a List<Record>.
-      List.generate(maps.length, (i) {
-        return Record(
-          maps[i]['record_no'],
-          maps[1]['accesscode'],
-          maps[i]['username'],
-          maps[i]['emailaddress'],
-          maps[i]['location'],
-          maps[i]['name'],
-          maps[i]['description'],
-          maps[i]['gender'],
-          maps[i]['contact'],
-          maps[i]['hkid'],
-          maps[i]['cssa'] == 0 ? false : true,
-          maps[i]['dob'],
-          maps[i]['age'],
-          maps[i]['reject'] == 0 ? false : true,
-          maps[i]['heartrate'],
-          maps[i]['bloodpressure'],
-          maps[i]['bloodglucose'],
-          maps[i]['bodyheight'],
-          maps[i]['bodyweight'],
-          maps[i]['bmi'],
-          maps[i]['respirationrate'],
-          maps[i]['smoking'] == 0 ? false : true,
-          maps[i]['alcohol'] == 0 ? false : true,
-          maps[i]['drugs'] == 0 ? false : true,
-          maps[i]['additionalinfo1'],
-          maps[i]['wound'],
-          maps[i]['mentalissues'],
-          maps[i]['pastmedrecords'],
-          maps[i]['additionalinfo2'],
-          maps[i]['']
-        );
-      });
-      */
     }
 
-    return Scaffold(
+    //  FUNCTION THAT UPLOADS THE RECORDS
+    Future<Null> _upload() async {
+      if (await _checkConnection()) {
+        // proceed only if there is connection
+        final Future<Database> database = openDatabase(
+          // Set the path to the database.
+          path.join(await getDatabasesPath(), 'records_database.db'),
+        );
+
+        // Get a reference to the database.
+        final Database db = await database;
+
+        // Query the table for all The Records.
+        final List<Map<String, dynamic>> maps = await db.query('records');
+
+        // Upload to firebase
+        await _uploadRecords(maps);
+
+        // delete records after uploading them
+        for (int i = 0; i < maps.length; ++i) {
+          _deleteRecords(maps[i]['record_no']);
+        }
+
+        for (int i=maps.length-1; i>=0; --i) {
+           _deleteTest(i);
+        }
+      } else {
+        _showDialog();
+      }
+    }
+
+    return new Scaffold(
         appBar: AppBar(leading: Container(), actions: <Widget>[
           // LOG OUT BUTTON
           FlatButton(
@@ -254,40 +274,35 @@ class _UserFilesState extends State<UserFiles> {
             },
           ),
         ]),
-        body: new Column(
+        body: new ListView(
           children: <Widget>[
             Padding(
               padding: EdgeInsets.only(top: 24),
             ),
-            new Expanded(
-                child: new ListView.builder(
-                    itemCount: mock.length,
-                    itemBuilder: (BuildContext ctxt, int index) {
-                      return new Padding(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 24, vertical: 5),
-                          child: Row(
-                            children: <Widget>[
-                              Padding(
-                                padding: EdgeInsets.only(right: 20),
-                                child: Text("2019-07-22-19:31:0$index-2046"),
-                              ),
-                              ButtonTheme(
-                                minWidth: 30.0,
-                                height: 20.0,
-                                child: FlatButton(
-                                    padding: EdgeInsets.all(0),
-                                    child: Text("delete"),
-                                    onPressed: () {
-                                      setState(() {
-                                        mock.remove(mock[index]);
-                                        // make it disappear from the interface
-                                      });
-                                    }),
-                              ),
-                            ],
-                          ));
-                    })),
+            Padding(
+              padding:
+                  EdgeInsets.only(left: 24, top: 24, bottom: 24, right: 24),
+              child: new ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: test.length,
+                  itemBuilder: (BuildContext ctxt, int index) {
+                    return new Row(children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Text(test[index].get_index()),
+                      ),
+
+                      // DELETE BUTTON, CALLS _deleteTest FUNCTION
+                      FlatButton(
+                          child:
+                              Text(AppTranslations.of(context).text("delete")),
+                          onPressed: () {
+                            _deleteTest(index);
+                            _deleteRecords(test[index].get_index());
+                          }),
+                    ]);
+                  }),
+            ),
             Padding(
                 padding: EdgeInsets.all(24),
                 child: Row(
@@ -297,22 +312,21 @@ class _UserFilesState extends State<UserFiles> {
                       child: RaisedButton(
                         child: Text("Upload Records"),
                         onPressed: () {
-                          _showDialog();
-                          // _uploadRecords();
-                          
+                          setState(() {
+                            _upload();
+                          });
                         },
                       ),
                     ),
                     RaisedButton(
-                        child: Text("Return"),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => NewRecord()),
-                          );
-                        },
-                      ),
+                      child: Text("Return"),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => NewRecord()),
+                        );
+                      },
+                    ),
                   ],
                 ))
           ],

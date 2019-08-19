@@ -30,7 +30,7 @@
 		</data>
 		<key>flutter_assets/assets/locale/localization_en.json</key>
 		<data>
-		2F78WAKSdGK88u4uEnKFZlH4MCE=
+		nkCYe41ndjgkPSPqEPpUbTlgMgQ=
 		</data>
 		<key>flutter_assets/assets/locale/localization_hk.json</key>
 		<data>
@@ -46,7 +46,7 @@
 		</data>
 		<key>flutter_assets/kernel_blob.bin</key>
 		<data>
-		QxSGidRmikZq6G+k3yX4JBrFnT8=
+		0kyQgvdQI5gETQgEotYc+Ga2clc=
 		</data>
 		<key>flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
 		<data>
@@ -118,11 +118,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			2F78WAKSdGK88u4uEnKFZlH4MCE=
+			nkCYe41ndjgkPSPqEPpUbTlgMgQ=
 			</data>
 			<key>hash2</key>
 			<data>
-			ve5D8ejFX4fLTGTBMdiQ0UKr2lWz6OLOfxrMR0wQdew=
+			5s5OZTfVBOiAwUdhb/oA3K+TwQN/D32jOz6orcZeAfY=
 			</data>
 		</dict>
 		<key>flutter_assets/assets/locale/localization_hk.json</key>
@@ -162,11 +162,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			QxSGidRmikZq6G+k3yX4JBrFnT8=
+			0kyQgvdQI5gETQgEotYc+Ga2clc=
 			</data>
 			<key>hash2</key>
 			<data>
-			g1VtlB3VpBYxQwvwwT3WfgYtOSgLS/kvr4AMWTIL20o=
+			EYnpEOI0/g6au0dpSAvnhwE7JpWfEgSWe/rkCB+M3PM=
 			</data>
 		</dict>
 		<key>flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>

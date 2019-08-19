@@ -16,6 +16,7 @@ import 'main.dart';
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 import 'files.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PatientInfo extends StatefulWidget {
   @override
@@ -30,7 +31,6 @@ class _PatientInfoState extends State<PatientInfo> {
   final _scrollController = new ScrollController();
 
   // CREATE NEW RECORD
-  int num_records = 0;
   String index = DateFormat('yyyy-MM-dd-hh:mm:ss-').format(DateTime.now());
 
   Record newrecord;
@@ -101,9 +101,12 @@ class _PatientInfoState extends State<PatientInfo> {
   List<File> images = new List(5);
   int numfiles = 0;
 
-  _getaccessdate() async {
+  _getLogin() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
+      accesscode = prefs.getString('accesscode');
+      username = prefs.getString('username');
+      emailaddress = prefs.getString('email');
       accessdate = prefs.getString('accessdate');
     });
   }
@@ -281,6 +284,7 @@ class _PatientInfoState extends State<PatientInfo> {
     });
   }
 
+/*
   // FUNCTION THAT STORES THE PATIENT'S INFO IN SHARED PREFERENCES (for temporary storage before uploading to firebase)
   _persistPatientInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -315,6 +319,7 @@ class _PatientInfoState extends State<PatientInfo> {
     prefs.setString('past-med-records', prevmedrecordsController.text);
     prefs.setString('additional-info2', additionalinfo2Controller.text);
   }
+  */
 
   // FUNCTION THAT STORES PATIENT'S INFO IN SQLITE
   Future<void> insertRecord(Record record) async {
@@ -326,8 +331,7 @@ class _PatientInfoState extends State<PatientInfo> {
       onCreate: (db, version) {
         // Run the CREATE TABLE statement on the database.
         return db.execute(
-          "CREATE TABLE records (record_no STRING PRIMARY KEY, accesscode TEXT, username TEXT, emailaddress TEXT, accessdate TEXT, location TEXT, name TEXT, description TEXT, gender TEXT, contact TEXT, hkid TEXT, cssa INTEGER, dob TEXT, age INTEGER, reject INTEGER, heartrate TEXT, bloodpressure TEXT, bloodglucose TEXT, bodyheight TEXT, bodyweight TEXT, bmi TEXT, respirationrate TEXT, smoking INTEGER, alcohol INTEGER, drugs INTEGER, additionalinfo1 TEXT, wound TEXT, mentalissues TEXT, pastmedrecords TEXT, additionalinfo2 TEXT, image0 BLOB, image1 BLOB, image2 BLOB, image3 BLOB, image4 BLOB)"
-        );
+            "CREATE TABLE records (record_no STRING PRIMARY KEY, accesscode TEXT, username TEXT, emailaddress TEXT, accessdate TEXT, location TEXT, name TEXT, description TEXT, gender TEXT, contact TEXT, hkid TEXT, cssa INTEGER, dob TEXT, age INTEGER, reject INTEGER, heartrate TEXT, bloodpressure TEXT, bloodglucose TEXT, bodyheight TEXT, bodyweight TEXT, bmi TEXT, respirationrate TEXT, smoking INTEGER, alcohol INTEGER, drugs INTEGER, additionalinfo1 TEXT, wound TEXT, mentalissues TEXT, pastmedrecords TEXT, additionalinfo2 TEXT, image0 BLOB, image1 BLOB, image2 BLOB, image3 BLOB, image4 BLOB)");
       },
       // Set the version. This executes the onCreate function and provides a
       // path to perform database upgrades and downgrades.
@@ -345,63 +349,47 @@ class _PatientInfoState extends State<PatientInfo> {
       record.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-  }
 
-  // FUNCTION THAT UPLOADS PHOTOS TO FIREBASE
-  Future<String> _uploadPicture() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String accesscode = prefs.getString('access-code');
-    String username = prefs.getString('user-name');
-    String patientname = prefs.getString('name');
-    String accessdate = prefs.getString('accessdate');
+    // Query the table for all The Records.
+    final List<Map<String, dynamic>> maps = await db.query('records');
 
-    for (int i = 0; i < numfiles; i++) {
-      final StorageReference firebaseStorageRef = FirebaseStorage.instance
-          .ref()
-          .child('$accessdate-$accesscode-$username-$patientname-image$i.jpeg');
-      final StorageUploadTask task = firebaseStorageRef.putFile(images[i]);
+    // Convert to records
+    for (int i = 0; i < maps.length; ++i) {
+      Record newrecord = new Record(
+        maps[i]['record_no'],
+        maps[i]['accesscode'],
+        maps[i]['username'],
+        maps[i]['emailaddress'],
+        maps[i]['accessdate'],
+        maps[i]['location'],
+        maps[i]['name'],
+        maps[i]['description'],
+        maps[i]['gender'],
+        maps[i]['contact'],
+        maps[i]['hkid'],
+        maps[i]['cssa'],
+        maps[i]['dob'],
+        maps[i]['age'],
+        maps[i]['reject'] == 0 ? false : true,
+        maps[i]['heartrate'],
+        maps[i]['bloodpressure'],
+        maps[i]['bloodglucose'],
+        maps[i]['bodyheight'],
+        maps[i]['bodyweight'],
+        maps[i]['bmi'],
+        maps[i]['respirationrate'],
+        maps[i]['smoking'] == 0 ? false : true,
+        maps[i]['alcohol'] == 0 ? false : true,
+        maps[i]['drugs'] == 0 ? false : true,
+        maps[i]['additionalinfo1'],
+        maps[i]['wound'],
+        maps[i]['mentalissues'],
+        maps[i]['pastmedrecords'],
+        maps[i]['additionalinfo2'],
+        maps[i]['bytes'],
+      );
+      MyInherited.of(context).newrecord(newrecord);
     }
-  }
-
-  // FUNCTION THAT UPLOADS PATIENT'S INFO TO FIREBASE
-  var records = Firestore.instance
-      .collection('Records')
-      .document(); // initializes firebase instance to be used in the function
-
-  Future<Null> _saveRecord() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    Map<String, dynamic> recordMap = {
-      'accessCode': prefs.getString('access-code') ?? 0,
-      'b. user-name': prefs.getString('user-name') ?? 0,
-      'c. user-contact': prefs.getString('user-contact') ?? 0,
-      'accessDate': prefs.getString('accessdate') ?? 0,
-      'd. location': prefs.getString('location') ?? 0,
-      'name': prefs.getString('name') ?? 0,
-      'f. description': prefs.getString('description') ?? 0,
-      'g. gender': prefs.getString('gender') ?? 0,
-      'h. contact': prefs.getString('contact') ?? 0,
-      'HKID': prefs.getString('HKID') ?? 0,
-      'j. CSSA': prefs.getBool('cssa') ?? 0,
-      'k. birthday': prefs.getString('birthday') ?? 0,
-      'l. age': prefs.getInt('age') ?? 0,
-      'm. reject': prefs.getBool('reject') ?? 0,
-      'n. heart-rate': prefs.getString('heart-rate') ?? 0,
-      'o. blood-pressure': prefs.getString('blood-pressure') ?? 0,
-      'p. blood-glucose': prefs.getString('blood-glucose') ?? 0,
-      'q. body-height': prefs.getString('body-height') ?? 0,
-      'r. body-weight': prefs.getString('body-weight') ?? 0,
-      's. bmi': prefs.getString('BMI') ?? 0,
-      't. respiration-rate': prefs.getString('respiration-rate') ?? 0,
-      'u. smoking': prefs.getBool('smoking') ?? 0,
-      'v. alcohol': prefs.getBool('alcohol') ?? 0,
-      'w. drugs': prefs.getBool('drugs') ?? 0,
-      'x. additional-info1': prefs.getString('additional-info1') ?? 0,
-      'y. wound': prefs.getString('wound') ?? 0,
-      'z. mental-issues': prefs.getString('mental-issues') ?? 0,
-      'za. past-med-records': prefs.getString('past-med-records') ?? 0,
-      'zb. additional-info2': prefs.getString('additional-info2') ?? 0,
-    };
-    records.setData(recordMap);
   }
 
 // FUNCTION THAT DISPLAYS DIALOG TO ASK USER IF THEY'D LIKE TO SUBMIT THE RECORDS
@@ -416,19 +404,13 @@ class _PatientInfoState extends State<PatientInfo> {
             new FlatButton(
                 child: Text(AppTranslations.of(context).text("finish")),
                 onPressed: () async {
-                  //_saveRecord();
-                  //_uploadPicture();
-
-                  index += num_records.toString(); // creates index that is unique for each data entry
-
                   // convert images to bytes
-                  List<List<int>> bytes = new List (images.length);
-                  for (int i=0; images[i] != null ; ++i) {
+                  List<List<int>> bytes = new List(images.length);
+                  for (int i = 0; images[i] != null; ++i) {
                     bytes[i] = await images[i].readAsBytes();
                   }
 
-                  _getaccessdate();
-
+                  await _getLogin();
                   Record newrecord = new Record(
                       index,
                       accesscode,
@@ -461,9 +443,9 @@ class _PatientInfoState extends State<PatientInfo> {
                       pastmedrecords,
                       additionalinfo2,
                       bytes);
-                  MyInherited.of(context).newrecord(newrecord);
-                  insertRecord(MyInherited.of(context).records[num_records]);
-                  ++num_records;
+
+                  insertRecord(newrecord);
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => UserFiles()),
@@ -715,8 +697,7 @@ class _PatientInfoState extends State<PatientInfo> {
                   child: RaisedButton(
                     child: Text(AppTranslations.of(context).text("reject")),
                     onPressed: () {
-                      _persistPatientInfo();
-                      _saveRecord();
+                      _showDialog();
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => NewRecord()),
@@ -1041,6 +1022,11 @@ class _PatientInfoState extends State<PatientInfo> {
                   padding: EdgeInsets.only(bottom: 20, left: 24, right: 24),
                   child: TextField(
                       controller: woundController,
+                      onChanged: (text) {
+                        setState(() {
+                          wound = text;
+                        });
+                      },
                       keyboardType: TextInputType.multiline,
                       decoration: InputDecoration(
                           labelText: '',
@@ -1066,6 +1052,11 @@ class _PatientInfoState extends State<PatientInfo> {
                       EdgeInsets.only(top: 0, bottom: 20, left: 24, right: 24),
                   child: TextField(
                       controller: mentalissuesController,
+                      onChanged: (text) {
+                        setState(() {
+                          mentalissues = text;
+                        });
+                      },
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(
                           labelText: '',
@@ -1093,6 +1084,11 @@ class _PatientInfoState extends State<PatientInfo> {
                       EdgeInsets.only(top: 0, bottom: 20, left: 24, right: 24),
                   child: TextField(
                       controller: prevmedrecordsController,
+                      onChanged: (text) {
+                        setState(() {
+                          pastmedrecords = text;
+                        });
+                      },
                       keyboardType: TextInputType.multiline,
                       decoration: InputDecoration(
                           labelText: '',
@@ -1212,14 +1208,13 @@ class _PatientInfoState extends State<PatientInfo> {
                       }),
                 ),
 
-                // FINISH RECORD BUTTON -- CALLS _persistPatientInfo and _showDialog
+                // FINISH RECORD BUTTON -- CALLS _showDialog
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: RaisedButton(
                     child:
                         Text(AppTranslations.of(context).text("finish_record")),
                     onPressed: () {
-                      _persistPatientInfo();
                       _showDialog();
                     },
                   ),

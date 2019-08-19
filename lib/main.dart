@@ -53,6 +53,12 @@ class MyInheritedState extends State<MyInherited> {
     });
   }
 
+  void deleterecord(Record deletedrecord) {
+    setState(() {
+      records.removeWhere((item) => (item.get_index == deletedrecord.get_index()));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return new _MyInherited(
@@ -171,9 +177,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _persistLogin() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('access-code', accesscode);
-    prefs.setString('user-name', username);
-    prefs.setString('user-contact', email);
+    prefs.setString('accesscode', accesscode);
+    prefs.setString('username', username);
+    prefs.setString('email', email);
   }
 
   @override

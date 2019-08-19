@@ -5,6 +5,7 @@ import 'main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'app_translations.dart';
+import 'files.dart';
 import 'records.dart';
 
 class NewRecord extends StatefulWidget {
@@ -93,6 +94,20 @@ class _NewRecordState extends State<NewRecord> {
                   );
                 },
               ),
+              Padding(
+                padding: EdgeInsets.all(30),
+                child: RaisedButton(
+                  padding: EdgeInsets.all(20),
+                  child: Text(AppTranslations.of(context).text("my_files"), style: TextStyle(fontSize: 21)),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => UserFiles()),
+                    );
+                  },
+                ),
+              ),
+
             ],
           ),
         ));

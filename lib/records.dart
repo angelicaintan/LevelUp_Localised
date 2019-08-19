@@ -1,6 +1,45 @@
 import 'dart:io';
 
 class Record {
+
+  // VARIABLES FOR USER IDENTITY, LOCATION, AND PATIENT'S PERSONAL PARTICULARS (part 1 of the record)
+  String _index;
+  String _accesscode;
+  String _username;
+  String _emailaddress;
+  String _accessdate;
+  String _location;
+  String _name;
+  String _description;
+  String _contact;
+  bool _cssa;
+  String _hkid;
+  String _gender;
+  String _dob;
+  int _age;
+  bool _smoking;
+  bool _alcohol;
+  bool _drugs;
+  bool _reject;
+
+  // VARIABLES FOR THE HEALTH INFO OF THE PATIENT (part 2 of the record)
+  String _heartrate;
+  String _bloodpressure;
+  String _bloodglucose;
+  String _bodyheight;
+  String _bodyweight;
+  String _bmi;
+  String _respirationrate;
+  String _additionalinfo1;
+
+  // VARIABLES FOR THE FURTHER DESCRIPTIONS OF THE PATIENT (part 3 of the record)
+  String _wound;
+  String _mentalissues;
+  String _pastmedrecords;
+  String _additionalinfo2;
+
+  List<List<int>> _imagebytes;
+
   Record(
       String index,
       String accesscode,
@@ -56,6 +95,9 @@ class Record {
     _bodyheight = bodyheight;
     _bmi = bmi;
     _respirationrate = respirationrate;
+    _smoking = smoking;
+    _alcohol = alcohol;
+    _drugs = drugs;
     _additionalinfo1 = additionalinfo1;
 
     _wound = wound;
@@ -65,44 +107,6 @@ class Record {
 
     _imagebytes = imagebytes;
   }
-
-  // VARIABLES FOR USER IDENTITY, LOCATION, AND PATIENT'S PERSONAL PARTICULARS (part 1 of the record)
-  String _index;
-  String _accesscode;
-  String _username;
-  String _emailaddress;
-  String _accessdate;
-  String _location;
-  String _name;
-  String _description;
-  String _contact;
-  bool _cssa;
-  String _hkid;
-  String _gender;
-  String _dob;
-  int _age;
-  bool _smoking = false;
-  bool _alcohol = false;
-  bool _drugs = false;
-  bool _reject = false;
-
-  // VARIABLES FOR THE HEALTH INFO OF THE PATIENT (part 2 of the record)
-  String _heartrate;
-  String _bloodpressure;
-  String _bloodglucose;
-  String _bodyheight;
-  String _bodyweight;
-  String _bmi;
-  String _respirationrate;
-  String _additionalinfo1;
-
-  // VARIABLES FOR THE FURTHER DESCRIPTIONS OF THE PATIENT (part 3 of the record)
-  String _wound;
-  String _mentalissues;
-  String _pastmedrecords;
-  String _additionalinfo2;
-
-  List<List<int>> _imagebytes;
 
   // GETTERS part 1
   String get_index() {
@@ -209,6 +213,7 @@ class Record {
       'accesscode': _accesscode,
       'username': _username,
       'emailaddress': _emailaddress,
+      'accessdate': _accessdate,
       'location': _location,
       'name': _name,
       'description': _description,
